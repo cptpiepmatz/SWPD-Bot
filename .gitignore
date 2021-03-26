@@ -1,0 +1,11 @@
+#ignore ide data
+.idea/
+
+#ignore npm packages
+node_modules/
+
+#ignore compiled files
+out/
+
+#don't store the login token in the repo
+.token
