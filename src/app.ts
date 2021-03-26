@@ -1,11 +1,22 @@
-import BitBucketClient from "./bitBucket/BitBucketClient"
+import BitBucketClient from "./bitBucket/BitBucketClient";
+import * as jsonfile from "jsonfile";
+import * as fs from "fs";
+
+const clientData = jsonfile.readFileSync("./bitbucketconfig.json") as {
+  host: string,
+  user: string,
+  project: string,
+  repo: string
+};
+
+const token = fs.readFileSync("./.token") as unknown as string;
 
 const client = new BitBucketClient(
-  "https://git.swl.informatik.uni-oldenburg.de",
-  "SWP2020D_Bot",
-  "MzAwMDcwODk0NjQ2OpZePzraFN6E9Ws3NRExx6DIX9ML",
-  "SP",
-  "swp2020d");
+  clientData.host,
+  clientData.user,
+  token,
+  clientData.project,
+  clientData.repo);
 
 client.fetchPullRequests()
   .then(json => {
