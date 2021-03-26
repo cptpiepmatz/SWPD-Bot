@@ -1,6 +1,7 @@
 import BitBucketClient from "./bitBucket/BitBucketClient";
 import * as jsonfile from "jsonfile";
 import * as fs from "fs";
+import PullRequestData from "./bitBucket/types/PullRequestData";
 
 const clientData = jsonfile.readFileSync("./bitbucketconfig.json") as {
   host: string,
@@ -18,7 +19,8 @@ const client = new BitBucketClient(
   clientData.project,
   clientData.repo);
 
-client.fetchPullRequests()
-  .then(json => {
-    console.log(json);
-  });
+client.startHeartbeat();
+
+client.on("prCreate", (pullRequest: PullRequestData) => {
+  console.log(pullRequest);
+});

@@ -1,12 +1,17 @@
-import fetch, {BodyInit, Headers, Response} from "node-fetch";
-import {encode} from "base-64";
-import {join} from "path";
+import fetch, { BodyInit, Headers, Response } from "node-fetch";
+import { encode } from "base-64";
+import { join } from "path";
 import PullRequestResponse from "./response/get/PullRequestResponse";
+import EventEmitter from "events";
+import PullRequestData from "./types/PullRequestData";
+import { setIntervalAsync, SetIntervalAsyncTimer } from "set-interval-async/dynamic";
 
 /**
  * A client to interact with the BitBucket API
  */
-class BitBucketClient {
+class BitBucketClient extends EventEmitter {
+  protected pullRequests: Map<Number, PullRequestData>
+    = new Map<Number, PullRequestData>();
 
   /**
    * Constructor for the client
@@ -18,12 +23,14 @@ class BitBucketClient {
    * @param repo The repository to work with
    */
   constructor(
-      private readonly host: string,
-      private readonly user: string,
-      private readonly token: string,
-      private readonly project: string,
-      private readonly repo: string
-  ) {}
+    private readonly host: string,
+    private readonly user: string,
+    private readonly token: string,
+    private readonly project: string,
+    private readonly repo: string
+  ) {
+    super();
+  }
 
   /**
    * Helper method to create the full api path
@@ -55,7 +62,6 @@ class BitBucketClient {
    * @private
    */
   private async get(path: string): Promise<Response> {
-    console.log(this.getPath(path));
     return await fetch(this.getPath(path), {
       method: "get",
       headers: this.getHeaders()
@@ -85,6 +91,33 @@ class BitBucketClient {
     let response = await this.get(join(
       "1.0/projects", this.project, "repos", this.repo, "pull-requests"));
     return await response.json() as PullRequestResponse;
+  }
+
+  public startHeartbeat(): SetIntervalAsyncTimer {
+    const client = this;
+    async function heartBeat() {
+      client.emit("heartbeat");
+
+      // fetch pull request regularly and check for updates
+      await (async function() {
+        let pullRequests = (await client.fetchPullRequests()).values;
+        if (client.pullRequests.size === 0) {
+          for (let pullRequest of pullRequests) {
+            client.pullRequests.set(pullRequest.id, pullRequest);
+          }
+          return;
+        }
+
+        for (let pullRequest of pullRequests) {
+          if (!client.pullRequests.has(pullRequest.id)) {
+            client.emit("prCreate", pullRequest);
+          }
+        }
+      })();
+
+    }
+
+    return setIntervalAsync(heartBeat, 1000 * 60);
   }
 }
 
