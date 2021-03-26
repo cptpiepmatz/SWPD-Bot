@@ -108,10 +108,17 @@ class BitBucketClient extends EventEmitter {
           return;
         }
 
+        let pRIdSet = new Set(client.pullRequests.keys()); // set of pr ids
         for (let pullRequest of pullRequests) {
           if (!client.pullRequests.has(pullRequest.id)) {
             client.emit("prCreate", pullRequest);
           }
+          pRIdSet.delete(pullRequest.id); // remove from set
+        }
+        for (let pRIdElement of pRIdSet) {
+          // every remaining element from the set has been closed
+          client.emit("prClosed", client.pullRequests.get(pRIdElement));
+          client.pullRequests.delete(pRIdElement);
         }
       })();
 
