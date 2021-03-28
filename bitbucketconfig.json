@@ -1,6 +1,8 @@
 {
   "host": "https://git.swl.informatik.uni-oldenburg.de",
   "user": "SWP2020D_Bot",
+  "name": "Bot der Gruppe D",
+  "email": "bot@cptpiepmatz.de",
   "project": "SP",
   "repo": "swp2020d"
 }

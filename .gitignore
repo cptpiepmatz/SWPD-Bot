@@ -9,3 +9,6 @@ out/
 
 #don't store the login token in the repo
 .token
+
+#don't store the repo the git client pulled
+repo/

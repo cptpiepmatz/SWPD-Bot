@@ -6,11 +6,11 @@ export default interface RepositoryData {
   id: number,
   name: string,
   scmId: string,
-  state: string,
+  state: string | "AVAILABLE",
   statusMessage: string,
   forkable: boolean,
   origin?: RepositoryData
   project?: ProjectData,
   public: boolean,
-  links: LinksData
+  links: LinksData & {clone: Array<{ href: string, name: string }>}
 }

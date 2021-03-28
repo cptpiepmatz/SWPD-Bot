@@ -5,6 +5,7 @@ import PullRequestResponse from "./response/get/PullRequestResponse";
 import EventEmitter from "events";
 import PullRequestData from "./types/PullRequestData";
 import { setIntervalAsync, SetIntervalAsyncTimer } from "set-interval-async/dynamic";
+import RepositoryData from "./types/RepositoryData";
 
 /**
  * A client to interact with the BitBucket API
@@ -91,6 +92,16 @@ class BitBucketClient extends EventEmitter {
     let response = await this.get(join(
       "1.0/projects", this.project, "repos", this.repo, "pull-requests"));
     return await response.json() as PullRequestResponse;
+  }
+
+  public async fetchRepository(): Promise<RepositoryData> {
+    let response = await this.get(join(
+      "1.0/projects", this.project, "repos", this.repo));
+    return await response.json() as RepositoryData;
+  }
+
+  public static extractCloneURL(repoData: RepositoryData): string | undefined {
+    return repoData.links.clone.find(element => element.name === "http")?.href;
   }
 
   public startHeartbeat(): SetIntervalAsyncTimer {
