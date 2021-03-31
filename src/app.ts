@@ -33,6 +33,9 @@ import GitClient from "./git/GitClient";
   );
 
   await gitClient.diff("master", "develop")
+    .then(res => {
+      return gitClient.diff2FullPath(res)
+    })
     .then(console.log);
 
 //client.startHeartbeat();

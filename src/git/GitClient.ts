@@ -8,6 +8,8 @@ import * as path from "path";
 class GitClient {
   private readonly git: SimpleGit;
   private readonly repoName: string;
+  private readonly repoDir: string = "./repo";
+  private readonly baseDir: string;
 
   constructor(
     private readonly cloneUrl: string,
@@ -20,11 +22,13 @@ class GitClient {
     let fileExtensionIndex = cloneUrl.lastIndexOf(".git");
     this.repoName = cloneUrl.substring(repoNameIndex + 1, fileExtensionIndex);
 
-    const repoDir = "./repo";
+    this.repoDir = "./repo";
+    const repoDir = this.repoDir;
     if (!fs.existsSync(repoDir)) {
       fs.mkdirSync(repoDir);
     }
-    const baseDir = path.join(repoDir, this.repoName)
+    this.baseDir = path.join(repoDir, this.repoName);
+    const baseDir = this.baseDir;
     if (!fs.existsSync(baseDir)) {
       fs.mkdirSync(baseDir)
     }
@@ -65,6 +69,14 @@ class GitClient {
       .split("\n");
     fileArray.pop();
     return fileArray;
+  }
+
+  diff2FullPath(diffPaths: string[]): string[] {
+    let fullPaths = [];
+    for (let diffPath of diffPaths) {
+      fullPaths.push(path.join(this.baseDir, diffPath));
+    }
+    return fullPaths;
   }
 }
 
