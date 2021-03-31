@@ -45,6 +45,16 @@ class CheckstyleCheck {
   isWarning(): boolean {
     return this.type === "WARN";
   }
+
+  getJavaClass(): string {
+    let javaLastIndex = this.path.lastIndexOf("/java/");
+    if (javaLastIndex === -1) javaLastIndex = this.path.lastIndexOf("\\java\\");
+    let javaClassString = this.path.substring(javaLastIndex + 6)
+    javaClassString = javaClassString
+      .substring(0, javaClassString.length - 5)
+      .replace(/[\/]/g, ".");
+    return javaClassString;
+  }
 }
 
 export default CheckstyleCheck;
