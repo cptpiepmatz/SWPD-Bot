@@ -21,7 +21,7 @@ class CheckstyleCheck {
   static fromString(line: string): CheckstyleCheck | null {
     if (!line.startsWith("[")) return null;
     let pattern =
-      /^\[(ERROR|WARN)] ([\w:\\\-.]+):(\d+)?:?(\d+)?:? ([\w\s.]+) \[(\w+)]/;
+      /^\[(ERROR|WARN)] ((?:\w:)?[\w\\\-.]+):(?:(\d+):)?(?:(\d+):)? ([\w\s.]+) \[(\w+)]/;
     let match = line.match(pattern);
 
     if (match?.length === 7) {
