@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+  "-//Puppy Crawl//DTD Check Configuration 1.2//EN"
+  "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
+
+<!-- This checkstyle configuration is used to control that javadoc comments are set correctly and aren't missing -->
+
+<module name="Checker">
+  <property name="charset" value="UTF-8"/>
+  <property name="severity" value="warning"/>
+  <property name="fileExtensions" value="java"/>
+  <module name="TreeWalker">
+    <module name="MissingJavadocMethod">
+      <property name="ignoreMethodNamesRegex"
+        value="^(set|get|is|has).+"/> <!-- this ignores simple getter methods -->
+      <property name="severity" value="${checkstyle.javadoc.severity}" default="error"/>
+    </module>
+    <module name="MissingJavadocType">
+      <property name="scope" value="private"/>
+      <property name="severity" value="${checkstyle.javadoc.severity}" default="error"/>
+    </module>
+    <module name="InvalidJavadocPosition"/>
+    <module name="JavadocBlockTagLocation"/>
+    <module name="JavadocMethod"/>
+    <module name="JavadocContentLocationCheck"/>
+    <module name="JavadocStyle"/>
+  </module>
+</module>
