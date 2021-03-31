@@ -32,6 +32,9 @@ import GitClient from "./git/GitClient";
     token
   );
 
+  await gitClient.diff("master", "develop")
+    .then(console.log);
+
 //client.startHeartbeat();
 
   bbClient.on("prCreate", (pullRequest: PullRequestData) => {

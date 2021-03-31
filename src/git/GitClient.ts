@@ -1,5 +1,6 @@
 import simpleGit, { SimpleGit } from "simple-git";
 import * as fs from "fs";
+import * as path from "path";
 
 /*
  * A client to interact with the git repo
@@ -15,12 +16,23 @@ class GitClient {
     private readonly email: string,
     private readonly token: string
   ) {
-    const dir = "./repo";
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir);
+    let repoNameIndex = cloneUrl.lastIndexOf("/");
+    let fileExtensionIndex = cloneUrl.lastIndexOf(".git");
+    this.repoName = cloneUrl.substring(repoNameIndex + 1, fileExtensionIndex);
+
+    const repoDir = "./repo";
+    if (!fs.existsSync(repoDir)) {
+      fs.mkdirSync(repoDir);
+    }
+    const baseDir = path.join(repoDir, this.repoName)
+    if (!fs.existsSync(baseDir)) {
+      fs.mkdirSync(baseDir)
     }
 
-    this.git = simpleGit(dir, {
+    //require('debug').enable('simple-git');
+
+    this.git = simpleGit(repoDir, {
+      baseDir: baseDir,
       config: [
         `user.name=${this.name}`,
         `user.email=${this.email}`
@@ -32,11 +44,27 @@ class GitClient {
       + this.user + ":" + this.token + "@"
       + cloneUrl.substr(protocolEndIndex + 3);
 
-    this.git.clone(remote);
+    if (fs.readdirSync(baseDir).length === 0) {
+      this.git.clone(remote);
+    }
+  }
 
-    let repoNameIndex = cloneUrl.lastIndexOf("/");
-    let fileExtensionIndex = cloneUrl.lastIndexOf(".git");
-    this.repoName = cloneUrl.substring(repoNameIndex + 1, fileExtensionIndex);
+  async updateRepo(branchName?: string): Promise<void> {
+    if (branchName) {
+      await this.git.checkout(branchName).pull();
+      return;
+    }
+    await this.git.pull();
+    return;
+  }
+
+  async diff(fromRef: string, toRef: string): Promise<string[]> {
+    await this.git.fetch();
+    let fileArray = (await this.git
+      .raw("diff", "--name-only", `origin/${fromRef}..origin/${toRef}`))
+      .split("\n");
+    fileArray.pop();
+    return fileArray;
   }
 }
 
