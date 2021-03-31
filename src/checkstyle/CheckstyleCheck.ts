@@ -52,7 +52,7 @@ class CheckstyleCheck {
     let javaClassString = this.path.substring(javaLastIndex + 6)
     javaClassString = javaClassString
       .substring(0, javaClassString.length - 5)
-      .replace(/[\/]/g, ".");
+      .replace(/[\/\\]/g, ".");
     return javaClassString;
   }
 }
