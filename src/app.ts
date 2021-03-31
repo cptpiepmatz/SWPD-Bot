@@ -3,8 +3,10 @@ import * as jsonfile from "jsonfile";
 import * as fs from "fs";
 import PullRequestData from "./bitBucket/types/PullRequestData";
 import GitClient from "./git/GitClient";
+import StyleChecker from "./checkstyle/StyleChecker";
 
 (async function() {
+  /*
   const clientData = jsonfile.readFileSync("./bitbucketconfig.json") as {
     host: string,
     user: string,
@@ -31,16 +33,25 @@ import GitClient from "./git/GitClient";
     clientData.email,
     token
   );
+  */
 
+  const styleChecker = new StyleChecker();
+
+  await styleChecker.runChecks("./repo/swp2020d/client/src/main/java/de/uol/swp/client/Main.java");
+
+  /*
   await gitClient.diff("master", "develop")
     .then(res => {
       return gitClient.diff2FullPath(res)
     })
     .then(console.log);
+   */
 
 //client.startHeartbeat();
 
+  /*
   bbClient.on("prCreate", (pullRequest: PullRequestData) => {
     console.log(pullRequest);
   });
+  */
 })();
