@@ -6,6 +6,8 @@ import EventEmitter from "events";
 import PullRequestData from "./types/PullRequestData";
 import { setIntervalAsync, SetIntervalAsyncTimer } from "set-interval-async/dynamic";
 import RepositoryData from "./types/RepositoryData";
+import { writeFile } from "fs/promises";
+import { readFileSync } from "fs";
 
 /**
  * A client to interact with the BitBucket API
@@ -54,6 +56,7 @@ class BitBucketClient extends EventEmitter {
   private getHeaders(): Headers {
     let headers = new Headers();
     headers.set("Authorization", "Basic " + encode(this.user + ":" + this.token));
+    headers.set("Content-Type", "application/json");
     return headers;
   }
 
@@ -102,10 +105,41 @@ class BitBucketClient extends EventEmitter {
     return await response.json() as PullRequestResponse;
   }
 
+  public async commentPullRequest(comment: string, pullRequestId: number): Promise<void> {
+    let response = await this.post(join(
+      this.getRepoPart(), "pull-requests", pullRequestId.toString(), "comments"
+    ), JSON.stringify({"text": comment}));
+    if (!response.ok) throw new Error(response.statusText);
+  }
+
   public async fetchRepository(): Promise<RepositoryData> {
     let response = await this.get(this.getRepoPart());
     return await response.json() as RepositoryData;
   }
+
+  private async writePRs(): Promise<[boolean, any]> {
+    let serializableObject: { [key: number]: PullRequestData } = {};
+    for (let [key, value] of this.pullRequests as Map<Number, PullRequestData>) {
+      serializableObject[+key] = value;
+    }
+    let success = await writeFile(
+      "./.bb-pr-data",
+      JSON.stringify(serializableObject),
+      { encoding: "utf-8" });
+    if (success === undefined) return [true, success];
+    return [false, success];
+  }
+
+  private async readPRs(): Promise<Map<Number, PullRequestData>> {
+    let file = readFileSync("./.bb-pr-data", { encoding: "utf-8" });
+    let map: Map<Number, PullRequestData> = new Map();
+    for (let [index, data] of Object.entries(JSON.parse(file)) as [string, PullRequestData][]) {
+      map.set(+index, data);
+    }
+    return map;
+  }
+
+
 
   public static extractCloneURL(repoData: RepositoryData): string | undefined {
     return repoData.links.clone.find(element => element.name === "http")?.href;
@@ -120,25 +154,34 @@ class BitBucketClient extends EventEmitter {
       await (async function() {
         let pullRequests = (await client.fetchPullRequests()).values;
         if (client.pullRequests === null) {
-          client.pullRequests = new Map<Number, PullRequestData>();
-          for (let pullRequest of pullRequests) {
-            client.pullRequests.set(pullRequest.id, pullRequest);
+          try {
+            client.pullRequests = await client.readPRs();
           }
-          return;
+          catch (e) {
+            console.error(e);
+            client.pullRequests = new Map();
+            return;
+          }
         }
 
         let pRIdSet = new Set(client.pullRequests.keys()); // set of pr ids
         for (let pullRequest of pullRequests) {
           if (!client.pullRequests.has(pullRequest.id)) {
             client.emit("prCreate", pullRequest);
+            client.pullRequests.set(pullRequest.id, pullRequest)
           }
           pRIdSet.delete(pullRequest.id); // remove from set
         }
         for (let pRIdElement of pRIdSet) {
           // every remaining element from the set has been closed
-          client.emit("prClosed", client.pullRequests.get(pRIdElement));
+          client.emit("prClose", client.pullRequests.get(pRIdElement));
           client.pullRequests.delete(pRIdElement);
         }
+
+        // store the updated PRs to a file to restore it eventually with it
+        client.writePRs().then(([success, value]) => {
+          if (!success) console.error(value);
+        });
       })();
 
     }

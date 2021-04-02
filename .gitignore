@@ -12,3 +12,6 @@ out/
 
 #don't store the repo the git client pulled
 repo/
+
+#don't store what the BBClient stored as cache for stable reboots
+.bb-pr-data
