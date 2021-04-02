@@ -1,10 +1,9 @@
 import BitBucketClient from "./bitBucket/BitBucketClient";
 import * as jsonfile from "jsonfile";
 import * as fs from "fs";
-import PullRequestData from "./bitBucket/types/PullRequestData";
+import PullRequestData from "./bitBucket/types/data/PullRequestData";
 import GitClient from "./git/GitClient";
 import StyleChecker from "./checkstyle/StyleChecker";
-import { ExecException } from "child_process";
 
 (async function() {
   const clientData = jsonfile.readFileSync("./bitbucketconfig.json") as {
@@ -38,40 +37,30 @@ import { ExecException } from "child_process";
 
   const styleChecker = new StyleChecker();
 
-  /*
-  styleChecker
-    .runChecks("./repo/swp2020d/client/src/main/java/de/uol/swp/client/Main.java")
-    .then(checks => {
-      let comment = "";
-      for (let check of checks) {
-        comment += check.toMarkdown() + "\n";
-      }
-      bbClient.commentPullRequest(comment, 3);
-    })
-   */
-
-  let prData = await bbClient.fetchPullRequest(3);
-  let diff = await gitClient.diff(prData.fromRef.displayId, prData.toRef.displayId);
-  console.log("from: " + prData.fromRef.displayId);
-  console.log("to: " + prData.toRef.displayId);
-  console.log(diff);
-  let fullDiff = gitClient.extendRepoPaths(diff);
-  await gitClient.checkout(prData.fromRef.displayId);
-  let checks = await styleChecker.runChecks(fullDiff);
-  let checkMarkdowns = [];
-  for (let check of checks) {
-    checkMarkdowns.push(check.toMarkdown());
-  }
-  console.log(checkMarkdowns);
-
-  //bbClient.startHeartbeat();
+  bbClient.startHeartbeat();
 
   bbClient.on("heartbeat", () => {
     console.log("BB Update");
   });
 
-  bbClient.on("prCreate", (pullRequest: PullRequestData) => {
-    console.log("BB PR created");
+  bbClient.on("prCreate", async (pullRequest: PullRequestData) => {
+    let diffResponse = await bbClient.fetchDiff(pullRequest.id);
+    let sources: Array<string> = [];
+    for (let diff of diffResponse.diffs) {
+      sources.push(diff.source.toString);
+    }
+    let extendedSources = gitClient.extendRepoPaths(sources);
+    await gitClient.checkout(pullRequest.fromRef.displayId);
+    await gitClient.pull();
+    let checks = await styleChecker.runChecks(extendedSources);
+    let markdownArray: Array<string> = [];
+    for (let check of checks) {
+      markdownArray.push(check.toMarkdown());
+    }
+    if (markdownArray.length !== 0) {
+      let markdownString = markdownArray.join("\n");
+      await bbClient.commentPullRequest(markdownString, pullRequest.id);
+    }
   });
 
   bbClient.on("prClose", (pullRequest: PullRequestData) => {
