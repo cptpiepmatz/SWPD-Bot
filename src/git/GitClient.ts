@@ -55,11 +55,11 @@ class GitClient {
     });
   }
 
-  private async fetch(): Promise<void> {
+  async fetch(): Promise<void> {
     await this.runGitCommand("fetch", this.workingDir);
   }
 
-  private async pull(): Promise<void> {
+  async pull(): Promise<void> {
     await this.runGitCommand("pull", this.workingDir);
   }
 
