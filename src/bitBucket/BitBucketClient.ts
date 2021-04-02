@@ -142,7 +142,7 @@ class BitBucketClient extends EventEmitter {
 
     }
 
-    return setIntervalAsync(heartBeat, 1000 * 60);
+    return setIntervalAsync(heartBeat, 1000 * 20);
   }
 }
 
