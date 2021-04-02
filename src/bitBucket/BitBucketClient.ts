@@ -95,6 +95,12 @@ class BitBucketClient extends EventEmitter {
     return join("1.0/projects", this.project, "repos", this.repo);
   }
 
+  public async fetchPullRequest(pullRequestId: number): Promise<PullRequestData> {
+    let response = await this.get(join(
+      this.getRepoPart(), "pull-requests", pullRequestId.toString()));
+    return await response.json() as PullRequestData;
+  }
+
   /**
    * Fetches all open pull requests for a specific repository
    * @returns The data for all open pull request of the specific repository
