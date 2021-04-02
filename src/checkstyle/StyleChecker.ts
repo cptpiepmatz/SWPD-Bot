@@ -17,8 +17,7 @@ class StyleChecker {
     }
   }
 
-
-  async runChecks(files: string[] | string) {
+  async runChecks(files: string[] | string): Promise<CheckstyleCheck[]> {
     if (!Array.isArray(files)) files = [files];
     let filesConcat = "";
     for (let file of files) {
@@ -50,9 +49,7 @@ class StyleChecker {
         throw error;
       }
     }
-    for (let check of checks) {
-      console.log(check.toString());
-    }
+    return checks;
   }
 }
 
