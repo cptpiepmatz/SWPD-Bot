@@ -11,8 +11,7 @@ import RepositoryData from "./types/RepositoryData";
  * A client to interact with the BitBucket API
  */
 class BitBucketClient extends EventEmitter {
-  protected pullRequests: Map<Number, PullRequestData>
-    = new Map<Number, PullRequestData>();
+  protected pullRequests: Map<Number, PullRequestData> | null = null;
 
   /**
    * Constructor for the client
@@ -22,6 +21,7 @@ class BitBucketClient extends EventEmitter {
    * @param token The token (or password if no token was generated)
    * @param project The project the repository is in
    * @param repo The repository to work with
+   * @param isUserRepo Is the working repo a user repository or a project one
    */
   constructor(
     private readonly host: string,
@@ -119,7 +119,8 @@ class BitBucketClient extends EventEmitter {
       // fetch pull request regularly and check for updates
       await (async function() {
         let pullRequests = (await client.fetchPullRequests()).values;
-        if (client.pullRequests.size === 0) {
+        if (client.pullRequests === null) {
+          client.pullRequests = new Map<Number, PullRequestData>();
           for (let pullRequest of pullRequests) {
             client.pullRequests.set(pullRequest.id, pullRequest);
           }
