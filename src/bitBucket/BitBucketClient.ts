@@ -28,7 +28,8 @@ class BitBucketClient extends EventEmitter {
     private readonly user: string,
     private readonly token: string,
     private readonly project: string,
-    private readonly repo: string
+    private readonly repo: string,
+    private readonly isUserRepo: boolean
   ) {
     super();
   }
@@ -84,19 +85,25 @@ class BitBucketClient extends EventEmitter {
     });
   }
 
+  private getRepoPart(): string {
+    if (this.isUserRepo) {
+      return join("1.0/users", this.project, "repos", this.repo);
+    }
+    return join("1.0/projects", this.project, "repos", this.repo);
+  }
+
   /**
    * Fetches all open pull requests for a specific repository
    * @returns The data for all open pull request of the specific repository
    */
   public async fetchPullRequests(): Promise<PullRequestResponse> {
     let response = await this.get(join(
-      "1.0/projects", this.project, "repos", this.repo, "pull-requests"));
+      this.getRepoPart(), "pull-requests"));
     return await response.json() as PullRequestResponse;
   }
 
   public async fetchRepository(): Promise<RepositoryData> {
-    let response = await this.get(join(
-      "1.0/projects", this.project, "repos", this.repo));
+    let response = await this.get(this.getRepoPart());
     return await response.json() as RepositoryData;
   }
 
