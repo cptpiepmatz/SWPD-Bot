@@ -39,6 +39,25 @@ class CheckstyleCheck {
     return null;
   }
 
+  toMarkdown(): string {
+    let typeDisplay: string;
+    switch (this.type) {
+      case "ERROR":
+        typeDisplay = "❌"
+        break;
+      case "WARN":
+        typeDisplay = "⚠️"
+        break;
+      default:
+        typeDisplay = "❓"
+    }
+
+    let lines = ":" + this.lineNumber;
+    if (!isNaN(this.characterNumber)) lines += ":" + this.characterNumber;
+
+    return `**${typeDisplay} ${this.comment}** (*${this.getJavaClass()}${lines}*)`
+  }
+
   isError(): boolean {
     return this.type === "ERROR";
   }
