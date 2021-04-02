@@ -8,6 +8,7 @@ import { setIntervalAsync, SetIntervalAsyncTimer } from "set-interval-async/dyna
 import RepositoryData from "./types/RepositoryData";
 import { writeFile } from "fs/promises";
 import { readFileSync } from "fs";
+import DiffResponse from "./response/get/DiffResponse";
 
 /**
  * A client to interact with the BitBucket API
@@ -95,7 +96,7 @@ class BitBucketClient extends EventEmitter {
     return join("1.0/projects", this.project, "repos", this.repo);
   }
 
-  public async fetchPullRequest(pullRequestId: number): Promise<PullRequestData> {
+  async fetchPullRequest(pullRequestId: number): Promise<PullRequestData> {
     let response = await this.get(join(
       this.getRepoPart(), "pull-requests", pullRequestId.toString()));
     return await response.json() as PullRequestData;
@@ -105,22 +106,29 @@ class BitBucketClient extends EventEmitter {
    * Fetches all open pull requests for a specific repository
    * @returns The data for all open pull request of the specific repository
    */
-  public async fetchPullRequests(): Promise<PullRequestResponse> {
+  async fetchPullRequests(): Promise<PullRequestResponse> {
     let response = await this.get(join(
       this.getRepoPart(), "pull-requests"));
     return await response.json() as PullRequestResponse;
   }
 
-  public async commentPullRequest(comment: string, pullRequestId: number): Promise<void> {
+  async commentPullRequest(comment: string, pullRequestId: number): Promise<void> {
     let response = await this.post(join(
       this.getRepoPart(), "pull-requests", pullRequestId.toString(), "comments"
     ), JSON.stringify({"text": comment}));
     if (!response.ok) throw new Error(response.statusText);
   }
 
-  public async fetchRepository(): Promise<RepositoryData> {
+  async fetchRepository(): Promise<RepositoryData> {
     let response = await this.get(this.getRepoPart());
     return await response.json() as RepositoryData;
+  }
+
+  async fetchDiff(pullRequestId: number): Promise<DiffResponse> {
+    let response = await this.get(join(
+      this.getRepoPart(), "pull-requests", pullRequestId.toString(), "diff"
+    ));
+    return await response.json() as DiffResponse;
   }
 
   private async writePRs(): Promise<[boolean, any]> {
