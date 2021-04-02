@@ -1,4 +1,4 @@
-import DiffData from "../../types/DiffData";
+import DiffData from "../../data/DiffData";
 
 export default interface DiffResponse {
   fromHash: string,

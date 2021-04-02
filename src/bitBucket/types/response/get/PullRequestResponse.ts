@@ -1,4 +1,4 @@
-import PullRequestData from "../../types/PullRequestData";
+import PullRequestData from "../../data/PullRequestData";
 
 export default interface PullRequestResponse {
   size: number,

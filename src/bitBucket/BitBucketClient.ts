@@ -1,14 +1,14 @@
 import fetch, { BodyInit, Headers, Response } from "node-fetch";
 import { encode } from "base-64";
 import { join } from "path";
-import PullRequestResponse from "./response/get/PullRequestResponse";
+import PullRequestResponse from "./types/response/get/PullRequestResponse";
 import EventEmitter from "events";
-import PullRequestData from "./types/PullRequestData";
+import PullRequestData from "./types/data/PullRequestData";
 import { setIntervalAsync, SetIntervalAsyncTimer } from "set-interval-async/dynamic";
-import RepositoryData from "./types/RepositoryData";
+import RepositoryData from "./types/data/RepositoryData";
 import { writeFile } from "fs/promises";
 import { readFileSync } from "fs";
-import DiffResponse from "./response/get/DiffResponse";
+import DiffResponse from "./types/response/get/DiffResponse";
 
 /**
  * A client to interact with the BitBucket API
