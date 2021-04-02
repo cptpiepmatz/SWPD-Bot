@@ -3,6 +3,7 @@
   "user": "SWP2020D_Bot",
   "name": "Bot der Gruppe D",
   "email": "bot@cptpiepmatz.de",
-  "project": "SP",
-  "repo": "swp2020d"
+  "project": "swp2020d_bot",
+  "repo": "swp2020d-bottest",
+  "isUserRepo": true
 }
