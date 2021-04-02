@@ -58,10 +58,10 @@ class CheckstyleCheck {
     return `**${typeDisplay} ${this.comment}** (*${this.getJavaClass()}${lines}*)`
   }
 
-  isError(): boolean {
+  get isError(): boolean {
     return this.type === "ERROR";
   }
-  isWarning(): boolean {
+  get isWarning(): boolean {
     return this.type === "WARN";
   }
 
