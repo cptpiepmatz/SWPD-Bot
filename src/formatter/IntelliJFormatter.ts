@@ -19,7 +19,7 @@ class IntelliJFormatter {
     if (!Array.isArray(files)) files = [files];
     let fileString = "";
     for (let file of files) {
-      fileString += `"${file}" `;
+      fileString += `"${resolve(file)}" `;
     }
     await this.lock.acquireAsync();
     return new Promise((resolve, reject) => {
