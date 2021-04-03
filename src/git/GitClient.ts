@@ -78,6 +78,18 @@ class GitClient {
     await this.pull();
   }
 
+  async commitAll(summary: string, description?: string): Promise<void> {
+    let commitMessage = `-m "${summary.trim()}"`;
+    if (description?.trim().length !== 0) {
+      commitMessage += ` -m "${description?.trim()}"`;
+    }
+    await this.runGitCommand(`commit -a ${commitMessage}`, this.workingDir);
+  }
+
+  async push(): Promise<void> {
+    await this.runGitCommand("push", this.workingDir);
+  }
+
   extendRepoPaths(diffPaths: string[]): string[] {
     let fullPaths = [];
     for (let diffPath of diffPaths) {
