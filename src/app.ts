@@ -4,40 +4,54 @@ import * as fs from "fs";
 import PullRequestData from "./bitBucket/types/data/PullRequestData";
 import GitClient from "./git/GitClient";
 import StyleChecker from "./checkstyle/StyleChecker";
+import IntelliJFormatter from "./formatter/IntelliJFormatter";
+
+const token = (fs.readFileSync("./.token", "utf-8") as unknown as string)
+  .replace(/[\r\n\s]+/g, "");
+
+const bitBucketConfig = jsonfile.readFileSync("./bitbucketconfig.json") as {
+  host: string,
+  user: string,
+  project: string,
+  repo: string,
+  name: string,
+  email: string,
+  isUserRepo: boolean
+};
+
+const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
+  ideaPath: string,
+  formatterXML: string
+}
+
 
 (async function() {
-  const clientData = jsonfile.readFileSync("./bitbucketconfig.json") as {
-    host: string,
-    user: string,
-    project: string,
-    repo: string,
-    name: string,
-    email: string,
-    isUserRepo: boolean
-  };
-
-  const token = (fs.readFileSync("./.token", "utf-8") as unknown as string)
-    .replace(/[\r\n\s]+/g, "");
-
   const bbClient = new BitBucketClient(
-    clientData.host,
-    clientData.user,
+    bitBucketConfig.host,
+    bitBucketConfig.user,
     token,
-    clientData.project,
-    clientData.repo,
-    clientData.isUserRepo);
+    bitBucketConfig.project,
+    bitBucketConfig.repo,
+    bitBucketConfig.isUserRepo);
 
   const gitClient = new GitClient(
     BitBucketClient.extractCloneURL(await bbClient.fetchRepository()) as string,
-    clientData.user,
-    clientData.name,
-    clientData.email,
+    bitBucketConfig.user,
+    bitBucketConfig.name,
+    bitBucketConfig.email,
     token
   );
 
   const styleChecker = new StyleChecker();
 
-  bbClient.startHeartbeat();
+  const formatter = new IntelliJFormatter(
+    formatterConfig.ideaPath,
+    formatterConfig.formatterXML
+  );
+
+  await formatter.format("C:/Users/derPi/Google Drive/Uni/Softwareprojekt/swp2020d/client/src/main/java/de/uol/swp/client/ClientApp.java");
+
+  //bbClient.startHeartbeat();
 
   bbClient.on("heartbeat", () => {
     console.log("BB Update");
