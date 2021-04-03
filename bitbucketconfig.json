@@ -5,5 +5,6 @@
   "email": "bot@cptpiepmatz.de",
   "project": "swp2020d_bot",
   "repo": "swp2020d-bottest",
-  "isUserRepo": true
+  "isUserRepo": true,
+  "approvalsUntilFormat": 1
 }

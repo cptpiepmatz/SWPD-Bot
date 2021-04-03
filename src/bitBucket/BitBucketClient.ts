@@ -9,6 +9,7 @@ import RepositoryData from "./types/data/RepositoryData";
 import { writeFile } from "fs/promises";
 import { readFileSync } from "fs";
 import DiffResponse from "./types/response/get/DiffResponse";
+import deepEqual from "deep-equal";
 
 /**
  * A client to interact with the BitBucket API
@@ -153,8 +154,6 @@ class BitBucketClient extends EventEmitter {
     return map;
   }
 
-
-
   public static extractCloneURL(repoData: RepositoryData): string | undefined {
     return repoData.links.clone.find(element => element.name === "http")?.href;
   }
@@ -178,12 +177,19 @@ class BitBucketClient extends EventEmitter {
           }
         }
 
+        for (let remotePR of pullRequests) {
+          let localPR = client.pullRequests.get(remotePR.id);
+          if (!deepEqual(remotePR, localPR)) {
+            client.emit("prUpdate", localPR, remotePR);
+          }
+        }
+
         let pRIdSet = new Set(client.pullRequests.keys()); // set of pr ids
         for (let pullRequest of pullRequests) {
           if (!client.pullRequests.has(pullRequest.id)) {
             client.emit("prCreate", pullRequest);
-            client.pullRequests.set(pullRequest.id, pullRequest)
           }
+          client.pullRequests.set(pullRequest.id, pullRequest);
           pRIdSet.delete(pullRequest.id); // remove from set
         }
         for (let pRIdElement of pRIdSet) {
