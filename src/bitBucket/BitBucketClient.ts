@@ -12,7 +12,8 @@ import DiffResponse from "./types/response/get/DiffResponse";
 import deepEqual from "deep-equal";
 
 /**
- * A client to interact with the BitBucket API
+ * A client to interact with the BitBucket API.
+ * <p>It's dedicated to only one repository.
  */
 class BitBucketClient extends EventEmitter {
   protected pullRequests: Map<Number, PullRequestData> | null = null;
@@ -66,6 +67,7 @@ class BitBucketClient extends EventEmitter {
    * Helper method to access the api via get requests
    *
    * @param path The api part to access
+   * @returns The response of the server
    * @private
    */
   private async get(path: string): Promise<Response> {
@@ -80,6 +82,7 @@ class BitBucketClient extends EventEmitter {
    *
    * @param path The api part to access
    * @param body The body to post onto the server
+   * @returns The response of the server
    * @private
    */
   private async post(path: string, body: BodyInit): Promise<Response> {
@@ -90,6 +93,11 @@ class BitBucketClient extends EventEmitter {
     });
   }
 
+  /**
+   * Helper method to get the part of the api used for repos.
+   *
+   * @private
+   */
   private getRepoPart(): string {
     if (this.isUserRepo) {
       return join("1.0/users", this.project, "repos", this.repo);
@@ -97,6 +105,12 @@ class BitBucketClient extends EventEmitter {
     return join("1.0/projects", this.project, "repos", this.repo);
   }
 
+  /**
+   * Fetches a specific pull request by it's id.
+   *
+   * @param pullRequestId The id of the pull request to fetch
+   * @returns The data of the fetched pull request
+   */
   async fetchPullRequest(pullRequestId: number): Promise<PullRequestData> {
     let response = await this.get(join(
       this.getRepoPart(), "pull-requests", pullRequestId.toString()));
@@ -104,8 +118,9 @@ class BitBucketClient extends EventEmitter {
   }
 
   /**
-   * Fetches all open pull requests for a specific repository
-   * @returns The data for all open pull request of the specific repository
+   * Fetches all open pull requests.
+   *
+   * @returns The data for all open pull requests
    */
   async fetchPullRequests(): Promise<PullRequestResponse> {
     let response = await this.get(join(
@@ -113,6 +128,12 @@ class BitBucketClient extends EventEmitter {
     return await response.json() as PullRequestResponse;
   }
 
+  /**
+   * Comments under a specified pull request.
+   *
+   * @param comment The comment to post under the pull request
+   * @param pullRequestId The id of the pull request to comment under
+   */
   async commentPullRequest(comment: string, pullRequestId: number): Promise<void> {
     let response = await this.post(join(
       this.getRepoPart(), "pull-requests", pullRequestId.toString(), "comments"
@@ -120,11 +141,22 @@ class BitBucketClient extends EventEmitter {
     if (!response.ok) throw new Error(response.statusText);
   }
 
+  /**
+   * Fetches the data for the repository.
+   *
+   * @returns The data of the repository.
+   */
   async fetchRepository(): Promise<RepositoryData> {
     let response = await this.get(this.getRepoPart());
     return await response.json() as RepositoryData;
   }
 
+  /**
+   * Fetches the diff for a pull request.
+   *
+   * @param pullRequestId The id of the pull request
+   * @returns The response including the data for the diff
+   */
   async fetchDiff(pullRequestId: number): Promise<DiffResponse> {
     let response = await this.get(join(
       this.getRepoPart(), "pull-requests", pullRequestId.toString(), "diff"
@@ -132,6 +164,11 @@ class BitBucketClient extends EventEmitter {
     return await response.json() as DiffResponse;
   }
 
+  /**
+   * Helper method to write the local pull request in a permanent cache.
+   *
+   * @private
+   */
   private async writePRs(): Promise<void> {
     let serializableObject: { [key: number]: PullRequestData } = {};
     for (let [key, value] of this.pullRequests as Map<Number, PullRequestData>) {
@@ -145,6 +182,12 @@ class BitBucketClient extends EventEmitter {
     throw result;
   }
 
+  /**
+   * Helper method to read from the permanent cache.
+   * <p>Used for restoring the local pull requests.
+   *
+   * @private
+   */
   private async readPRs(): Promise<Map<Number, PullRequestData>> {
     let file = readFileSync("./.bb-pr-data", {encoding: "utf-8"});
     let map: Map<Number, PullRequestData> = new Map();
@@ -154,58 +197,120 @@ class BitBucketClient extends EventEmitter {
     return map;
   }
 
+  /**
+   * Static method used to extract the clone url from repository data.
+   *
+   * @param repoData The repository data to extract the clone url from
+   * @returns The clone url if available, usually it is available
+   */
   public static extractCloneURL(repoData: RepositoryData): string | undefined {
     return repoData.links.clone.find(element => element.name === "http")?.href;
   }
 
+  /**
+   * Method used to start the polling the client to interact with the api
+   * regularly.
+   * <p>This will also let the client start to emit events.
+   *
+   * @returns The interval async timer to allow to modify the heartbeat later on
+   */
   public startHeartbeat(): SetIntervalAsyncTimer {
+    // In the heartbeat function the `this` reference gets lost.
     const client = this;
 
+    /**
+     * Nested function to easily invoke the heartbeat of the client.
+     */
     async function heartBeat() {
+      /**
+       * This event gets called everytime the client pulls fresh data from the
+       * server.
+       *
+       * @event BitBucketClient#heartbeat
+       */
       client.emit("heartbeat");
 
-      // fetch pull request regularly and check for updates
-      await (async function() {
-        let pullRequests = (await client.fetchPullRequests()).values;
-        if (client.pullRequests === null) {
-          try {
-            client.pullRequests = await client.readPRs();
-          }
-          catch (e) {
-            console.error(e);
-            client.pullRequests = new Map();
-            return;
-          }
+      let pullRequests = (await client.fetchPullRequests()).values;
+      if (client.pullRequests === null) {
+        // If `client.pullRequests` is null the client hasn't stored any PRs.
+        try {
+          // Trying to read the PRs from the permanent cache file.
+          client.pullRequests = await client.readPRs();
         }
+        catch (e) {
+          // If reading the file is not possible the client will start without
+          // any local data.
+          console.error(e);
+          client.pullRequests = new Map();
+        }
+      }
 
-        for (let remotePR of pullRequests) {
-          let localPR = client.pullRequests.get(remotePR.id);
-          if (!deepEqual(remotePR, localPR)) {
-            client.emit("prUpdate", localPR, remotePR);
-          }
+      for (let remotePR of pullRequests) {
+        // Iterate over the remote pull requests to check for updates
+        let localPR = client.pullRequests.get(remotePR.id);
+        if (!deepEqual(remotePR, localPR)) {
+          /**
+           * This event gets called when the local pull request is not up to
+           * date with the one from the server.
+           *
+           * @event BitBucketClient#prUpdate
+           * @param {PullRequestData} oldPR The local, old pull request
+           * @param {PullRequestData} newPR The remote, new pull request from the server
+           */
+          client.emit("prUpdate", localPR, remotePR);
         }
+      }
 
-        let pRIdSet = new Set(client.pullRequests.keys()); // set of pr ids
-        for (let pullRequest of pullRequests) {
-          if (!client.pullRequests.has(pullRequest.id)) {
-            client.emit("prCreate", pullRequest);
-          }
-          client.pullRequests.set(pullRequest.id, pullRequest);
-          pRIdSet.delete(pullRequest.id); // remove from set
+      // Use a set to memorize which PR IDs the client knows
+      let pRIdSet = new Set(client.pullRequests.keys());
+      for (let remotePR of pullRequests) {
+        // Iterate over the remote pull requests to check if there are any new
+        // ones.
+        if (!client.pullRequests.has(remotePR.id)) {
+          /**
+           * This event gets called everytime the client recognizes a pull
+           * request as a new one.
+           *
+           * @event BitBucketClient#prCreate
+           * @param {PullRequestData} pullRequest The newly created pull request
+           */
+          client.emit("prCreate", remotePR);
         }
-        for (let pRIdElement of pRIdSet) {
-          // every remaining element from the set has been closed
-          client.emit("prClose", client.pullRequests.get(pRIdElement));
-          client.pullRequests.delete(pRIdElement);
-        }
+        // Update the local PRs.
+        client.pullRequests.set(remotePR.id, remotePR);
 
-        // store the updated PRs to a file to restore it eventually with it
-        client.writePRs().catch(console.error);
-      })();
+        /*
+         * Remove the PR from the set defined early.
+         *
+         * This will allow later on to recognize which PRs are only stored
+         * locally now.
+         */
+        pRIdSet.delete(remotePR.id);
+      }
+
+      for (let pRIdElement of pRIdSet) {
+        // Iterate over all the remaining local PR IDs.
+
+        /**
+         * This event gets called when a pull request gets closed on the
+         * server side.
+         *
+         * @event BitBucketClient#prClose
+         * @param {PullRequestData} pullRequest The closed pull request
+         */
+        client.emit("prClose", client.pullRequests.get(pRIdElement));
+
+        // Finally delete the locally stored pull request.
+        client.pullRequests.delete(pRIdElement);
+      }
+
+      // Store the updated PRs to a file to restore it eventually with it.
+      client.writePRs().catch(console.error);
 
     }
 
-    return setIntervalAsync(heartBeat, 1000 * 20);
+    // Call the heartbeat function every minute.
+    return setIntervalAsync(heartBeat, 1000 * 60);
   }
 }
 
