@@ -10,3 +10,6 @@ ij_typescript_catch_on_new_line = true
 ij_typescript_method_brace_style = end_of_line
 ij_typescript_use_double_quotes = true
 ij_typescript_use_semicolon_after_statement = true
+ij_typescript_space_before_function_left_parenth = false
+ij_typescript_keep_simple_blocks_in_one_line = true
+ij_typescript_keep_simple_methods_in_one_line = true
