@@ -12,7 +12,6 @@ class GitClient {
   private readonly repoName: string;
   private readonly workingDir: string;
   private readonly lock: AwaitLock;
-  private readonly transactionLock: AwaitLock;
 
   constructor(
     private readonly cloneUrl: string,
@@ -34,8 +33,6 @@ class GitClient {
     const remote = cloneUrl.substr(0, protocolEndIndex + 3)
       + this.user + ":" + this.token + "@"
       + cloneUrl.substr(protocolEndIndex + 3);
-
-    this.transactionLock = new AwaitLock();
 
     this.lock = new AwaitLock();
     if (!fs.existsSync(this.workingDir)) {
@@ -91,14 +88,6 @@ class GitClient {
 
   async push(): Promise<void> {
     await this.runGitCommand("push", this.workingDir);
-  }
-
-  async beginTransaction(): Promise<void> {
-    await this.transactionLock.acquireAsync();
-  }
-
-  endTransaction() {
-    this.transactionLock.release();
   }
 
   extendRepoPaths(diffPaths: string[]): string[] {

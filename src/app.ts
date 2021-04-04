@@ -5,6 +5,7 @@ import PullRequestData from "./bitBucket/types/data/PullRequestData";
 import GitClient from "./git/GitClient";
 import StyleChecker from "./checkstyle/StyleChecker";
 import IntelliJFormatter from "./formatter/IntelliJFormatter";
+import AwaitLock from "await-lock";
 
 const token = (fs.readFileSync("./.token", "utf-8") as unknown as string)
   .replace(/[\r\n\s]+/g, "");
@@ -27,6 +28,8 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
 
 
 (async function() {
+  const lock = new AwaitLock();
+
   const bbClient = new BitBucketClient(
     bitBucketConfig.host,
     bitBucketConfig.user,
@@ -50,7 +53,14 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
     formatterConfig.formatterXML
   );
 
-  await formatter.format("C:/Users/derPi/Google Drive/Uni/Softwareprojekt/swp2020d/client/src/main/java/de/uol/swp/client/ClientApp.java");
+  async function fetchDiffSources(pullRequestId: number): Promise<string[]> {
+    let diffResponse = await bbClient.fetchDiff(pullRequestId);
+    let sources: Array<string> = [];
+    for (let diff of diffResponse.diffs) {
+      sources.push(diff.source.toString);
+    }
+    return gitClient.extendRepoPaths(sources);
+  }
 
   bbClient.startHeartbeat();
 
@@ -60,16 +70,12 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
 
   bbClient.on("prCreate", async (pullRequest: PullRequestData) => {
     console.log("BB PR created");
-    let diffResponse = await bbClient.fetchDiff(pullRequest.id);
-    let sources: Array<string> = [];
-    for (let diff of diffResponse.diffs) {
-      sources.push(diff.source.toString);
-    }
-    let extendedSources = gitClient.extendRepoPaths(sources);
-    await gitClient.beginTransaction();
+    let extendedSources = await fetchDiffSources(pullRequest.id);
+    await lock.acquireAsync();
     await gitClient.checkout(pullRequest.fromRef.displayId);
     await gitClient.pull();
     let checks = await styleChecker.runChecks(extendedSources);
+    lock.release();
     let markdownArray: Array<string> = [];
     for (let check of checks) {
       markdownArray.push(check.toMarkdown());
@@ -78,7 +84,6 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
       let markdownString = markdownArray.join("\n");
       await bbClient.commentPullRequest(markdownString, pullRequest.id);
     }
-    gitClient.endTransaction();
   });
 
   bbClient.on("prClose", (pullRequest: PullRequestData) => {
@@ -99,13 +104,8 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
     if (getApprovalCount(oldPR) < bitBucketConfig.approvalsUntilFormat) {
       if (getApprovalCount(newPR) >= bitBucketConfig.approvalsUntilFormat) {
         console.log("formatting now!");
-        let diffResponse = await bbClient.fetchDiff(oldPR.id);
-        let sources: Array<string> = [];
-        for (let diff of diffResponse.diffs) {
-          sources.push(diff.source.toString);
-        }
-        await gitClient.beginTransaction();
-        let extendedSources = gitClient.extendRepoPaths(sources);
+        let extendedSources = await fetchDiffSources(oldPR.id);
+        await lock.acquireAsync();
         await gitClient.checkout(oldPR.fromRef.displayId);
         await formatter.format(extendedSources);
         console.log("formatted successfully");
@@ -113,7 +113,7 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
         await gitClient.commitAll("Auto-Reformat PR#" + oldPR.id,
           "This action was performed automatically by a bot.");
         await gitClient.push();
-        gitClient.endTransaction();
+        lock.release();
       }
     }
   });
