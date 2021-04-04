@@ -132,17 +132,17 @@ class BitBucketClient extends EventEmitter {
     return await response.json() as DiffResponse;
   }
 
-  private async writePRs(): Promise<[boolean, any]> {
+  private async writePRs(): Promise<void> {
     let serializableObject: { [key: number]: PullRequestData } = {};
     for (let [key, value] of this.pullRequests as Map<Number, PullRequestData>) {
       serializableObject[+key] = value;
     }
-    let success = await writeFile(
+    let result = await writeFile(
       "./.bb-pr-data",
       JSON.stringify(serializableObject),
       {encoding: "utf-8"});
-    if (success === undefined) return [true, success];
-    return [false, success];
+    if (result === undefined) return;
+    throw result;
   }
 
   private async readPRs(): Promise<Map<Number, PullRequestData>> {
@@ -200,9 +200,7 @@ class BitBucketClient extends EventEmitter {
         }
 
         // store the updated PRs to a file to restore it eventually with it
-        client.writePRs().then(([success, value]) => {
-          if (!success) console.error(value);
-        });
+        client.writePRs().catch(console.error);
       })();
 
     }
