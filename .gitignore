@@ -7,6 +7,9 @@ node_modules/
 #ignore compiled files
 out/
 
+#ignore logging files
+log/
+
 #don't store the login token in the repo
 .token
 
