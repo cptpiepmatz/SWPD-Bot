@@ -25,8 +25,8 @@ class StyleChecker {
     }
     let checks: CheckstyleCheck[] = [];
     for (let checkstyle of this.checkstyles) {
-      let [error, checkString, errorOut] = await (function () {
-        return new Promise<[ExecException | null, string, string]>(function (resolve, reject) {
+      let [error, checkString, errorOut] = await (function() {
+        return new Promise<[ExecException | null, string, string]>(function(resolve, reject) {
           exec('java -Duser.language=en -jar "'
             + path.join(__dirname, `../../lib/checkstyle-${checkstyleVersion}-all.jar`)
             + '" -c "'

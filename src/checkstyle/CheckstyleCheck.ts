@@ -3,7 +3,7 @@ class CheckstyleCheck {
   constructor(
     readonly type: "ERROR" | "WARN" | string,
     readonly path: string,
-    readonly lineNumber : number,
+    readonly lineNumber: number,
     readonly characterNumber: number,
     readonly comment: string,
     readonly moduleName: string
@@ -43,24 +43,25 @@ class CheckstyleCheck {
     let typeDisplay: string;
     switch (this.type) {
       case "ERROR":
-        typeDisplay = "❌"
+        typeDisplay = "❌";
         break;
       case "WARN":
-        typeDisplay = "⚠️"
+        typeDisplay = "⚠️";
         break;
       default:
-        typeDisplay = "❓"
+        typeDisplay = "❓";
     }
 
     let lines = ":" + this.lineNumber;
     if (!isNaN(this.characterNumber)) lines += ":" + this.characterNumber;
 
-    return `**${typeDisplay} ${this.comment}** (*${this.getJavaClass()}${lines}*)`
+    return `**${typeDisplay} ${this.comment}** (*${this.getJavaClass()}${lines}*)`;
   }
 
   get isError(): boolean {
     return this.type === "ERROR";
   }
+
   get isWarning(): boolean {
     return this.type === "WARN";
   }
@@ -68,7 +69,7 @@ class CheckstyleCheck {
   getJavaClass(): string {
     let javaLastIndex = this.path.lastIndexOf("/java/");
     if (javaLastIndex === -1) javaLastIndex = this.path.lastIndexOf("\\java\\");
-    let javaClassString = this.path.substring(javaLastIndex + 6)
+    let javaClassString = this.path.substring(javaLastIndex + 6);
     javaClassString = javaClassString
       .substring(0, javaClassString.length - 5)
       .replace(/[\/\\]/g, ".");

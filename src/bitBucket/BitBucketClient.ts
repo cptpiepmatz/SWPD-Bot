@@ -140,13 +140,13 @@ class BitBucketClient extends EventEmitter {
     let success = await writeFile(
       "./.bb-pr-data",
       JSON.stringify(serializableObject),
-      { encoding: "utf-8" });
+      {encoding: "utf-8"});
     if (success === undefined) return [true, success];
     return [false, success];
   }
 
   private async readPRs(): Promise<Map<Number, PullRequestData>> {
-    let file = readFileSync("./.bb-pr-data", { encoding: "utf-8" });
+    let file = readFileSync("./.bb-pr-data", {encoding: "utf-8"});
     let map: Map<Number, PullRequestData> = new Map();
     for (let [index, data] of Object.entries(JSON.parse(file)) as [string, PullRequestData][]) {
       map.set(+index, data);
@@ -160,6 +160,7 @@ class BitBucketClient extends EventEmitter {
 
   public startHeartbeat(): SetIntervalAsyncTimer {
     const client = this;
+
     async function heartBeat() {
       client.emit("heartbeat");
 

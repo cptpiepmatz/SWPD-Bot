@@ -12,5 +12,5 @@ export default interface RepositoryData {
   origin?: RepositoryData
   project?: ProjectData,
   public: boolean,
-  links: LinksData & {clone: Array<{ href: string, name: string }>}
+  links: LinksData & { clone: Array<{ href: string, name: string }> }
 }

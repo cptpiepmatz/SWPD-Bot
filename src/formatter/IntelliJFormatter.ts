@@ -25,12 +25,12 @@ class IntelliJFormatter {
     return new Promise((resolve, reject) => {
       exec(
         `${this.ideaPath} format -s ${this.formatterConfig} ${fileString}`,
-        { cwd: "."},
+        {cwd: "."},
         error => {
           this.lock.release();
           if (error !== null) reject(error);
           resolve();
-      })
+        });
     });
   }
 }

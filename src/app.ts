@@ -24,7 +24,7 @@ const bitBucketConfig = jsonfile.readFileSync("./bitbucketconfig.json") as {
 const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
   ideaPath: string,
   formatterXML: string
-}
+};
 
 
 (async function() {

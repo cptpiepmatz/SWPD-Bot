@@ -1,5 +1,4 @@
 import * as fs from "fs";
-import * as path from "path";
 import { exec } from "child_process";
 import AwaitLock from "await-lock";
 
@@ -67,7 +66,7 @@ class GitClient {
     let diffOut = await this.runGitCommand(
       `diff --name-only ${fromRef}..${toRef}`,
       this.workingDir);
-    let diffArray =  diffOut.split("\n");
+    let diffArray = diffOut.split("\n");
     diffArray.pop();
     return diffArray;
   }
@@ -93,7 +92,7 @@ class GitClient {
   extendRepoPaths(diffPaths: string[]): string[] {
     let fullPaths = [];
     for (let diffPath of diffPaths) {
-      fullPaths.push(this.workingDir + "/" +diffPath);
+      fullPaths.push(this.workingDir + "/" + diffPath);
     }
     return fullPaths;
   }

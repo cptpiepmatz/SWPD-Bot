@@ -4,6 +4,6 @@ import LocationData from "./LocationData";
 export default interface DiffData {
   source: LocationData,
   destination: LocationData,
-  hunks :Array<HunkData>,
+  hunks: Array<HunkData>,
   truncated: boolean
 }
