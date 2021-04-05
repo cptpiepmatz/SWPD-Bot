@@ -249,6 +249,7 @@ class BitBucketClient extends EventEmitter {
         // Iterate over the remote pull requests to check for updates
         let localPR = client.pullRequests.get(remotePR.id);
         if (!deepEqual(remotePR, localPR)) {
+          if (localPR === undefined) continue;
           /**
            * This event gets called when the local pull request is not up to
            * date with the one from the server.
