@@ -142,13 +142,22 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
         let extendedSources = await fetchDiffSources(oldPR.id);
         await lock.acquireAsync();
         await gitClient.checkout(oldPR.fromRef.displayId);
-        await formatter.format(extendedSources);
+        let javaSources =
+          extendedSources.filter(source => source.endsWith(".java"));
+        await formatter.format(javaSources);
         console.log("formatted successfully");
 
-        // Commit everything and push it.
-        await gitClient.commitAll("Auto-Reformat PR#" + oldPR.id,
-          "This action was performed automatically by a bot.");
-        await gitClient.push();
+        try {
+          // Commit everything and push it.
+          await gitClient.commitAll("Auto-Reformat PR#" + oldPR.id,
+            "This action was performed automatically by a bot.")
+          await gitClient.push();
+        }
+        catch (e) {
+          // If nothing to commit, comment it.
+          await bbClient
+            .commentPullRequest("**👌 Nothing to format.**", oldPR.id);
+        }
         lock.release();
       }
     }
