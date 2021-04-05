@@ -20,11 +20,19 @@ class Logger {
    *
    * @param object The object to display logs for.
    */
-  constructor(object: object) {
+  constructor(object: object | string) {
+    // Use either the name of the object class's name or the string directly.
+    let labelName: string;
+    if (typeof object === "string") {
+      labelName = object;
+    }
+    else {
+      labelName = Object.getPrototypeOf(object).constructor.name;
+    }
 
     // The output format for the console.
     const consoleFormat = combine(
-      label({label: Object.getPrototypeOf(object).constructor.name}),
+      label({label: labelName}),
       timestamp({
         format: dayjs().format("HH:mm:ss")
       }),
@@ -39,7 +47,7 @@ class Logger {
 
     // The output format for the files.
     const fileFormat = combine(
-      label({label: Object.getPrototypeOf(object).constructor.name}),
+      label({label: labelName}),
       timestamp({
         format: dayjs().format("YYYY-MM-DD HH:mm:ss,SSS")
       }),
