@@ -103,7 +103,12 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
       // If there is at least one thing to comment, it will be.
       let markdownString = markdownArray.join("\n");
       await bbClient.commentPullRequest(markdownString, pullRequest.id);
+      return;
     }
+
+    // Also post a comment if no conflicts were found.
+    let okString = "**✔️ No checkstyle conflicts found.** "
+    await bbClient.commentPullRequest(okString, pullRequest.id);
   });
 
   bbClient.on("prClose", (pullRequest: PullRequestData) => {
