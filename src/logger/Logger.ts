@@ -38,11 +38,9 @@ class Logger {
     // The output format for the console.
     const consoleFormat = combine(
       label({label: labelName}),
-      timestamp({
-        format: dayjs().format("HH:mm:ss")
-      }),
+      timestamp(),
       printf(msg => {
-        return `[${msg.timestamp}]`
+        return `[${dayjs(msg.timestamp).format("HH:mm:ss")}]`
           + "["
           + colorize(msg.level, `${msg.label}/${msg.level.toUpperCase()}`)
           + "]: "
@@ -53,13 +51,11 @@ class Logger {
     // The output format for the files.
     const fileFormat = combine(
       label({label: labelName}),
-      timestamp({
-        format: dayjs().format("YYYY-MM-DD HH:mm:ss,SSS")
-      }),
+      timestamp(),
       printf(msg => {
         let printLevel = msg.level.toUpperCase();
         while (printLevel.length < 7) printLevel = " " + printLevel;
-          return `${msg.timestamp} `
+          return `${dayjs(msg.timestamp).format("YYYY-MM-DD HH:mm:ss,SSS")} `
             + `[${require("process").pid}] `
             + printLevel
             + " - "
