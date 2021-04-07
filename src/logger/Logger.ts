@@ -1,5 +1,6 @@
 import * as winston from "winston";
 import dayjs from "dayjs";
+import dotenv from "dotenv";
 
 // Some convenience constants.
 const {createLogger, format, transports} = winston;
@@ -21,6 +22,10 @@ class Logger {
    * @param object The object to display logs for.
    */
   constructor(object: object | string) {
+    // Use dotenv to load environmental variables.
+    // Used to define the LOGLEVEL.
+    dotenv.config();
+
     // Use either the name of the object class's name or the string directly.
     let labelName: string;
     if (typeof object === "string") {
@@ -70,7 +75,7 @@ class Logger {
       transports: [
         new transports.Console({
           // Log everything into the console.
-          level: "silly",
+          level: process.env.LOGLEVEL?.toLowerCase() || "info",
           format: consoleFormat
         }),
         new winston.transports.File({
