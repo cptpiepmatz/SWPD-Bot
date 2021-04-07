@@ -1,6 +1,7 @@
 import AwaitLock from "await-lock";
 import { exec } from "child_process";
 import { resolve } from "path";
+import Logger from "../logger/Logger";
 
 // The directory the formatter config has to be stored in.
 const formatterDir = "./idea-formatter";
@@ -14,6 +15,7 @@ class IntelliJFormatter {
   // Lock to make sure two runners aren't working at the same time.
   private readonly lock: AwaitLock;
   private readonly formatterConfig: string;
+  private readonly logger: Logger;
 
   /**
    * Constructor.
@@ -25,6 +27,10 @@ class IntelliJFormatter {
     this.lock = new AwaitLock();
 
     this.formatterConfig = resolve(formatterDir + "/" + configName);
+
+    this.logger = new Logger(this);
+    this.logger.debug("Found config: " + this.formatterConfig);
+    this.logger.silly("Constructor done");
   }
 
   /**
@@ -33,6 +39,7 @@ class IntelliJFormatter {
    * @param files Path(s) of the file(s) to format
    */
   async format(files: string[] | string): Promise<void> {
+    this.logger.verbose("Formatting " + files.length + " files");
     // Don't try anything if the array or the string is empty.
     if (files.length === 0) return;
     if (!Array.isArray(files)) files = [files];
@@ -45,12 +52,19 @@ class IntelliJFormatter {
     await this.lock.acquireAsync();
     return new Promise((resolve, reject) => {
       // Promisify the exec function.
+
+      let command =
+        `${this.ideaPath} format -s ${this.formatterConfig} ${fileString}`;
+      this.logger.debug("Calling Command: " + command);
       exec(
-        `${this.ideaPath} format -s ${this.formatterConfig} ${fileString}`,
+        command,
         {cwd: "."},
-        error => {
+        (error, stdout, stderr) => {
           // The formatter is done, the lock can be released.
           this.lock.release();
+
+          if (stdout.length !== 0) this.logger.debug(stdout);
+          if (stderr.length !== 0) this.logger.error(stderr);
 
           if (error !== null) reject(error);
           // If the files are formatted correctly there is no need for further
