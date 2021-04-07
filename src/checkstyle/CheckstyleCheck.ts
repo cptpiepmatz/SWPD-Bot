@@ -1,7 +1,10 @@
 /**
  * Class holding information about a checkstyle check.
  */
+import Logger from "../logger/Logger";
+
 class CheckstyleCheck {
+  private readonly logger: Logger;
 
   /**
    * Constructor.
@@ -20,7 +23,18 @@ class CheckstyleCheck {
     readonly characterNumber: number,
     readonly comment: string,
     readonly moduleName: string
-  ) {}
+  ) {
+    this.logger = new Logger(this);
+    this.logger.silly("Constructor done");
+    this.logger
+      .debug("Constructed Check:")
+      .debug("  severity: " + severity)
+      .debug("  path: " + path)
+      .debug("  lineNumber: " + lineNumber)
+      .debug("  characterNumber: " + characterNumber)
+      .debug("  comment: " + comment)
+      .debug("  moduleName: " + moduleName);
+  }
 
   /**
    * Formats the check back to the same format it was before parsing.
@@ -28,6 +42,7 @@ class CheckstyleCheck {
    * @returns A string containing all the check information.
    */
   toString(): string {
+    this.logger.silly("Stringifying Check");
     return `[${this.severity}] `
       + this.path + ":"
       + (isNaN(this.lineNumber) ? "" : this.lineNumber + ":")
@@ -66,6 +81,8 @@ class CheckstyleCheck {
       /^\[(ERROR|WARN)] ((?:\w:)?[\w\\\-.]+):(?:(\d+):)?(?:(\d+):)? ([\w\s.]+) \[(\w+)]/;
     let match = line.match(pattern);
 
+    new Logger("CheckstyleCheck#fromString").debug(JSON.stringify(match));
+
     if (match?.length === 7) {
       let severity = match[1];
       let path = match[2];
@@ -88,6 +105,7 @@ class CheckstyleCheck {
    * @returns The for markdown formatted string
    */
   toMarkdown(): string {
+    this.logger.silly("Making Markdown for Check");
     let typeDisplay: string;
     switch (this.severity) {
       case "ERROR":
@@ -103,7 +121,11 @@ class CheckstyleCheck {
     let lines = ":" + this.lineNumber;
     if (!isNaN(this.characterNumber)) lines += ":" + this.characterNumber;
 
-    return `**${typeDisplay} ${this.comment}** (*${this.getJavaClass()}${lines}*)`;
+    let finishedMarkdown =
+      `**${typeDisplay} ${this.comment}** (*${this.getJavaClass()}${lines}*)`;
+    this.logger.debug("Finished Markdown: " + finishedMarkdown);
+
+    return finishedMarkdown;
   }
 
   get isError(): boolean {
@@ -120,6 +142,7 @@ class CheckstyleCheck {
    * @returns A string with the name of the java class
    */
   getJavaClass(): string {
+    this.logger.silly("Getting Java Class");
     let javaLastIndex = this.path.lastIndexOf("/java/");
 
     // Java code is typically stored in "java" directory
@@ -128,6 +151,8 @@ class CheckstyleCheck {
     javaClassString = javaClassString
       .substring(0, javaClassString.length - 5)
       .replace(/[\/\\]/g, ".");
+
+    this.logger.debug(`Found "${javaClassString}" in "${this.path}"`);
 
     return javaClassString;
   }

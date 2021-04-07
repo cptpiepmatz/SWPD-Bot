@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { exec, ExecException } from "child_process";
 import CheckstyleCheck from "./CheckstyleCheck";
+import Logger from "../logger/Logger";
 
 // The version of the jar stored in the "lib" directory.
 const checkstyleVersion = "8.41.1";
@@ -11,6 +12,7 @@ const checkstyleVersion = "8.41.1";
  */
 class StyleChecker {
   private readonly checkstyles: string[] = [];
+  private readonly logger: Logger;
 
   /**
    * Constructor.
@@ -23,6 +25,10 @@ class StyleChecker {
         this.checkstyles.push(path.join(checkstylesPath, checkstylePath));
       }
     }
+
+    this.logger = new Logger(this);
+    this.logger.debug("Found checkstyles: " + this.checkstyles.join(" "));
+    this.logger.silly("Constructor done");
   }
 
   /**
@@ -34,11 +40,14 @@ class StyleChecker {
   async runChecks(files: string[] | string): Promise<CheckstyleCheck[]> {
     if (!Array.isArray(files)) files = [files];
 
+    this.logger.debug("Running Checks on: " + files.join(" "));
+
     let filesConcat = "";
     for (let file of files) {
       filesConcat += `"${path.join(__dirname, "../..", file)}" `;
     }
 
+    let checker = this;
     let checks: CheckstyleCheck[] = [];
     for (let checkstyle of this.checkstyles) {
       // Iterate over all checkstyle XMLs
@@ -48,13 +57,19 @@ class StyleChecker {
           // Run the jar file with the locally installed java. It also makes
           // sure that the output is set to english. This allows the correct
           // parsing of the output.
-          exec('java -Duser.language=en -jar "'
+          let command ='java -Duser.language=en -jar "'
             + path.join(__dirname, `../../lib/checkstyle-${checkstyleVersion}-all.jar`)
             + '" -c "'
             + path.join(__dirname, "../..", checkstyle)
             + '" '
-            + filesConcat,
+            + filesConcat;
+          checker.logger.debug("Calling command: " + command);
+          exec(command,
             (error, stdout, stderr) => {
+
+              if (stdout.length !== 0) checker.logger.debug(stdout);
+              if (stderr.length !== 0) checker.logger.error(stderr);
+
               return resolve([error, stdout, stderr]);
             });
         });
@@ -66,8 +81,10 @@ class StyleChecker {
       let checkAmount = 0;
       for (let checkLine of checkString.split("\n")) {
         // Iterate over all the output lines and try to parse them.
+        this.logger.debug("Try to parse: " + checkLine);
         let check = CheckstyleCheck.fromString(checkLine);
         if (check === null) continue;
+        this.logger.debug("Parsed check for: " + checkLine);
         checks.push(CheckstyleCheck.fromString(checkLine) as CheckstyleCheck);
         checkAmount++;
       }
