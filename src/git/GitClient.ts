@@ -36,6 +36,11 @@ class GitClient {
     let fileExtensionIndex = cloneUrl.lastIndexOf(".git");
     this.repoName = cloneUrl.substring(repoNameIndex + 1, fileExtensionIndex);
 
+    // If the ./repo directory does not exist, make one
+    if (!fs.existsSync(repoDir)) {
+      fs.mkdirSync(repoDir);
+    }
+
     // defining what the working directory will be
     this.workingDir = repoDir + "/" + this.repoName;
 
