@@ -104,8 +104,9 @@ class Logger {
    *
    * @param message The message to log.
    */
-  error(message: string) {
+  error(message: string): Logger {
     this.winston.error(message);
+    return this;
   }
 
   /**
@@ -114,8 +115,9 @@ class Logger {
    *
    * @param message The message to log.
    */
-  warn(message: string) {
+  warn(message: string): Logger {
     this.winston.warn(message);
+    return this;
   }
 
   /**
@@ -124,8 +126,9 @@ class Logger {
    *
    * @param message The message to log.
    */
-  info(message: string) {
+  info(message: string): Logger {
     this.winston.info(message);
+    return this;
   }
 
   /**
@@ -134,8 +137,9 @@ class Logger {
    *
    * @param message The message to log.
    */
-  http(message: string) {
+  http(message: string): Logger {
     this.winston.http(message);
+    return this;
   }
 
   /**
@@ -144,8 +148,9 @@ class Logger {
    *
    * @param message The message to log.
    */
-  verbose(message: string) {
+  verbose(message: string): Logger {
     this.winston.verbose(message);
+    return this;
   }
 
   /**
@@ -154,8 +159,9 @@ class Logger {
    *
    * @param message The message to log.
    */
-  debug(message: string) {
+  debug(message: string): Logger {
     this.winston.debug(message);
+    return this;
   }
 
   /**
@@ -164,8 +170,9 @@ class Logger {
    *
    * @param message The message to log.
    */
-  silly(message: string) {
+  silly(message: string): Logger {
     this.winston.silly(message);
+    return this;
   }
 
 }
