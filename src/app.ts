@@ -6,6 +6,7 @@ import GitClient from "./git/GitClient";
 import StyleChecker from "./checkstyle/StyleChecker";
 import IntelliJFormatter from "./formatter/IntelliJFormatter";
 import AwaitLock from "await-lock";
+import Logger from "./logger/Logger";
 
 // The token used to log into BitBucket.
 const token = (fs.readFileSync("./.token", "utf-8") as unknown as string)
@@ -58,6 +59,8 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
     formatterConfig.formatterXML
   );
 
+  const logger = new Logger("APP");
+
   // Small helper function to fetch the diffs and get their full paths.
   async function fetchDiffSources(pullRequestId: number): Promise<string[]> {
     let diffResponse = await bbClient.fetchDiff(pullRequestId);
@@ -70,10 +73,11 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
 
   // This will start the heartbeat of the BitBucket client to allow listening to
   // it's events.
+  logger.info("Will start with the Heartbeat now!");
   bbClient.startHeartbeat();
 
   bbClient.on("heartbeat", () => {
-    console.log("BB Update");
+    logger.info("Heartbeat for the BitBucket Client");
   });
 
   bbClient.on("prCreate", async (pullRequest: PullRequestData) => {
@@ -81,7 +85,7 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
     // style check over it. The output of the check shall be commented under the
     // pull request.
 
-    console.log("BB PR created");
+    logger.info(`Pull Request #${pullRequest.id} was created on BitBucket`);
 
     let extendedSources = await fetchDiffSources(pullRequest.id);
 
@@ -90,6 +94,7 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
     await gitClient.checkout(pullRequest.fromRef.displayId);
     await gitClient.pull();
 
+    logger.info("Checking modified Files for Style Conflicts");
     let checks = await styleChecker.runChecks(extendedSources);
 
     lock.release(); // Files can be modified again.
@@ -103,16 +108,18 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
       // If there is at least one thing to comment, it will be.
       let markdownString = markdownArray.join("\n");
       await bbClient.commentPullRequest(markdownString, pullRequest.id);
+      logger.info(`Commented that ${markdownArray.length} Conflicts were found`);
       return;
     }
 
     // Also post a comment if no conflicts were found.
-    let okString = "**✔️ No checkstyle conflicts found.** "
+    let okString = "**✔️ No checkstyle conflicts found.** ";
     await bbClient.commentPullRequest(okString, pullRequest.id);
+    logger.info("Commented that no Conflicts were found");
   });
 
   bbClient.on("prClose", (pullRequest: PullRequestData) => {
-    console.log("BB PR closed");
+    logger.info(`Pull Request #${pullRequest.id} was closed`);
   });
 
   bbClient.on("prUpdate", async (oldPR: PullRequestData, newPR: PullRequestData) => {
@@ -121,7 +128,7 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
     // will perform a format. If there any formatted files, they will be
     // committed and pushed.
 
-    console.log("BB PR updated");
+    logger.info(`Pull Request #${oldPR.id} was updated`);
 
     // Helper function to count the approvals of a pull request.
     function getApprovalCount(pr: PullRequestData): number {
@@ -129,6 +136,7 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
       for (let reviewer of pr.reviewers) {
         if (reviewer.approved) approvalCount++;
       }
+      logger.debug(`Approvals for Pull Request #${pr.id} was ${approvalCount}`);
       return approvalCount;
     }
 
@@ -137,25 +145,29 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
       if (getApprovalCount(newPR) >= bitBucketConfig.approvalsUntilFormat) {
         // Check if the new one has enough approvals.
 
-        console.log("formatting now!");
+        logger.info("Starting the Formatter now!");
         // Fetch differences and run the formatter.
         let extendedSources = await fetchDiffSources(oldPR.id);
+        logger.debug("Found Diffs: " + extendedSources.join(" "));
         await lock.acquireAsync();
         await gitClient.checkout(oldPR.fromRef.displayId);
         let javaSources =
           extendedSources.filter(source => source.endsWith(".java"));
+        logger.debug("Filtered Diffs: " + javaSources.join(" "));
         await formatter.format(javaSources);
-        console.log("formatted successfully");
+        logger.info("Formatted everything successfully");
 
         try {
           // Commit everything.
           await gitClient.commitAll("Auto-Reformat PR#" + oldPR.id,
             "This action was performed automatically by a bot.");
+          logger.info("Committed formatted Code");
         }
         catch (e) {
           // If it cannot commit, probably there is nothing to commit.
           await bbClient
             .commentPullRequest("**👌 Nothing to format.**", oldPR.id);
+          logger.info("Found nothing to commit");
           lock.release();
           return;
         }
@@ -163,12 +175,14 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
         try {
           // Push changes.
           await gitClient.push();
+          logger.info("Pushed formatted Code");
         }
         catch (e) {
           // If it could not push, comment it.
           // Also stash the possible changes.
           await bbClient
             .commentPullRequest("**⚠️ Could not push changes.**", oldPR.id);
+          logger.warn("Could not push formatted Code");
           await gitClient.stash();
           lock.release();
         }
