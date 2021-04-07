@@ -86,6 +86,13 @@ class Logger {
           format: fileFormat
         }),
         new winston.transports.File({
+          // Log verbose and more into "./log/verbose.log".
+          level: "verbose",
+          filename: "verbose.log",
+          dirname: logDir,
+          format: fileFormat
+        }),
+        new winston.transports.File({
           // Log info and more into "./log/info.log".
           level: "info",
           filename: "info.log",
