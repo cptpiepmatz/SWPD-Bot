@@ -10,6 +10,7 @@ import { writeFile } from "fs/promises";
 import { readFileSync } from "fs";
 import DiffResponse from "./types/response/get/DiffResponse";
 import deepEqual from "deep-equal";
+import Logger from "../logger/Logger";
 
 /**
  * A client to interact with the BitBucket API.
@@ -17,6 +18,7 @@ import deepEqual from "deep-equal";
  */
 class BitBucketClient extends EventEmitter {
   protected pullRequests: Map<Number, PullRequestData> | null = null;
+  private readonly logger: Logger;
 
   /**
    * Constructor for the client
@@ -37,6 +39,8 @@ class BitBucketClient extends EventEmitter {
     private readonly isUserRepo: boolean
   ) {
     super();
+    this.logger = new Logger(this);
+    this.logger.silly("Constructor done.");
   }
 
   /**
@@ -47,7 +51,9 @@ class BitBucketClient extends EventEmitter {
    * @private
    */
   private getPath(path: string): string {
-    return new URL(join("rest/api", path), this.host).toString();
+    let url = new URL(join("rest/api", path), this.host).toString();
+    this.logger.silly("Path for API: " + url);
+    return url;
   }
 
   /**
@@ -60,6 +66,8 @@ class BitBucketClient extends EventEmitter {
     let headers = new Headers();
     headers.set("Authorization", "Basic " + encode(this.user + ":" + this.token));
     headers.set("Content-Type", "application/json");
+    this.logger.silly("Headers Authorization: " + headers.get("Authorization"));
+    this.logger.silly("Headers Content-Type: " + headers.get("Content-Type"));
     return headers;
   }
 
@@ -71,7 +79,9 @@ class BitBucketClient extends EventEmitter {
    * @private
    */
   private async get(path: string): Promise<Response> {
-    return await fetch(this.getPath(path), {
+    let fetchPath = this.getPath(path);
+    this.logger.http("GET: " + fetchPath);
+    return await fetch(fetchPath, {
       method: "get",
       headers: this.getHeaders()
     });
@@ -86,6 +96,8 @@ class BitBucketClient extends EventEmitter {
    * @private
    */
   private async post(path: string, body: BodyInit): Promise<Response> {
+    let fetchPath = this.getPath(path);
+    this.logger.http("POST: " + fetchPath + " " + body);
     return await fetch(this.getPath(path), {
       method: "post",
       body: body,
@@ -100,9 +112,13 @@ class BitBucketClient extends EventEmitter {
    */
   private getRepoPart(): string {
     if (this.isUserRepo) {
-      return join("1.0/users", this.project, "repos", this.repo);
+      let part = join("1.0/users", this.project, "repos", this.repo);
+      this.logger.silly("Getting Repo Part: " + part);
+      return part;
     }
-    return join("1.0/projects", this.project, "repos", this.repo);
+    let part = join("1.0/projects", this.project, "repos", this.repo);
+    this.logger.silly("Getting Repo Part: " + part);
+    return part;
   }
 
   /**
@@ -112,8 +128,10 @@ class BitBucketClient extends EventEmitter {
    * @returns The data of the fetched pull request
    */
   async fetchPullRequest(pullRequestId: number): Promise<PullRequestData> {
+    this.logger.verbose("Fetching Pull Request #" + pullRequestId);
     let response = await this.get(join(
       this.getRepoPart(), "pull-requests", pullRequestId.toString()));
+    this.logger.http("Got Response: " + JSON.stringify(response));
     return await response.json() as PullRequestData;
   }
 
@@ -123,8 +141,10 @@ class BitBucketClient extends EventEmitter {
    * @returns The data for all open pull requests
    */
   async fetchPullRequests(): Promise<PullRequestResponse> {
+    this.logger.verbose("Fetching all Pull Requests");
     let response = await this.get(join(
       this.getRepoPart(), "pull-requests"));
+    this.logger.http("Got Response: " + JSON.stringify(response));
     return await response.json() as PullRequestResponse;
   }
 
@@ -135,9 +155,12 @@ class BitBucketClient extends EventEmitter {
    * @param pullRequestId The id of the pull request to comment under
    */
   async commentPullRequest(comment: string, pullRequestId: number): Promise<void> {
+    this.logger.verbose("Commenting Pull Request #"
+      + pullRequestId + " with the comment: " + comment);
     let response = await this.post(join(
       this.getRepoPart(), "pull-requests", pullRequestId.toString(), "comments"
     ), JSON.stringify({"text": comment}));
+    this.logger.http("Got Response: " + JSON.stringify(response));
     if (!response.ok) throw new Error(response.statusText);
   }
 
@@ -147,7 +170,9 @@ class BitBucketClient extends EventEmitter {
    * @returns The data of the repository.
    */
   async fetchRepository(): Promise<RepositoryData> {
+    this.logger.verbose("Fetching Repository");
     let response = await this.get(this.getRepoPart());
+    this.logger.http("Got Response: " + JSON.stringify(response));
     return await response.json() as RepositoryData;
   }
 
@@ -158,9 +183,11 @@ class BitBucketClient extends EventEmitter {
    * @returns The response including the data for the diff
    */
   async fetchDiff(pullRequestId: number): Promise<DiffResponse> {
+    this.logger.verbose("Fetching Diffs for Pull Request #" + pullRequestId);
     let response = await this.get(join(
       this.getRepoPart(), "pull-requests", pullRequestId.toString(), "diff"
     ));
+    this.logger.http("Got Response: " + JSON.stringify(response));
     return await response.json() as DiffResponse;
   }
 
@@ -170,10 +197,12 @@ class BitBucketClient extends EventEmitter {
    * @private
    */
   private async writePRs(): Promise<void> {
+    this.logger.verbose("Saving Pull Requests to Cache");
     let serializableObject: { [key: number]: PullRequestData } = {};
     for (let [key, value] of this.pullRequests as Map<Number, PullRequestData>) {
       serializableObject[+key] = value;
     }
+    this.logger.debug("Writing to Cache: " + JSON.stringify(serializableObject));
     let result = await writeFile(
       "./.bb-pr-data",
       JSON.stringify(serializableObject),
@@ -189,7 +218,9 @@ class BitBucketClient extends EventEmitter {
    * @private
    */
   private async readPRs(): Promise<Map<Number, PullRequestData>> {
+    this.logger.verbose("Reading Pull Request from Cache");
     let file = readFileSync("./.bb-pr-data", {encoding: "utf-8"});
+    this.logger.debug("Read from Cache: " + file);
     let map: Map<Number, PullRequestData> = new Map();
     for (let [index, data] of Object.entries(JSON.parse(file)) as [string, PullRequestData][]) {
       map.set(+index, data);
@@ -218,10 +249,14 @@ class BitBucketClient extends EventEmitter {
     // In the heartbeat function the `this` reference gets lost.
     const client = this;
 
+    this.logger.verbose("Starting Heartbeat now!");
+
     /**
      * Nested function to easily invoke the heartbeat of the client.
      */
     async function heartBeat() {
+      client.logger.debug("Heartbeat now!");
+
       /**
        * This event gets called everytime the client pulls fresh data from the
        * server.
@@ -232,12 +267,16 @@ class BitBucketClient extends EventEmitter {
 
       let pullRequests = (await client.fetchPullRequests()).values;
       if (client.pullRequests === null) {
+        client.logger.debug("No Pull Request stored locally");
+
         // If `client.pullRequests` is null the client hasn't stored any PRs.
         try {
           // Trying to read the PRs from the permanent cache file.
           client.pullRequests = await client.readPRs();
         }
         catch (e) {
+          client.logger.debug("Cannot read Pull Request, will start from fresh");
+
           // If reading the file is not possible the client will start without
           // any local data.
           console.error(e);
@@ -250,6 +289,9 @@ class BitBucketClient extends EventEmitter {
         let localPR = client.pullRequests.get(remotePR.id);
         if (!deepEqual(remotePR, localPR)) {
           if (localPR === undefined) continue;
+          client.logger.debug("Pull Request differ from locally stored: "
+            + remotePR.title);
+
           /**
            * This event gets called when the local pull request is not up to
            * date with the one from the server.
@@ -268,6 +310,8 @@ class BitBucketClient extends EventEmitter {
         // Iterate over the remote pull requests to check if there are any new
         // ones.
         if (!client.pullRequests.has(remotePR.id)) {
+          client.logger.debug("Found new Pull Request: " + remotePR.title);
+
           /**
            * This event gets called everytime the client recognizes a pull
            * request as a new one.
@@ -291,6 +335,8 @@ class BitBucketClient extends EventEmitter {
 
       for (let pRIdElement of pRIdSet) {
         // Iterate over all the remaining local PR IDs.
+
+        client.logger.debug("Pull Request was closed: " + client.pullRequests.get(pRIdElement)?.title);
 
         /**
          * This event gets called when a pull request gets closed on the
