@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import { exec } from "child_process";
 import AwaitLock from "await-lock";
+import Logger from "../logger/Logger";
 
 // The directory the repository should be stored in.
 const repoDir = "./repo";
@@ -12,6 +13,7 @@ class GitClient {
   private readonly repoName: string;
   private readonly workingDir: string;
   private readonly lock: AwaitLock;
+  private readonly logger: Logger;
 
   /**
    * Constructor.
@@ -45,13 +47,20 @@ class GitClient {
 
     this.lock = new AwaitLock();
 
+    this.logger = new Logger(this);
+    this.logger.silly("Constructor done");
+
     if (!fs.existsSync(this.workingDir)) {
+      this.logger.info("Found no repo, will clone");
+
       // Preparing the repository if it doesn't exist locally.
       (async function(this: GitClient) {
         await this.runGitCommand("clone " + remote, repoDir);
         await this.runGitCommand(`config --local user.name "${this.name}"`, this.workingDir);
         await this.runGitCommand(`config --local user.email "${this.email}"`, this.workingDir);
-      }).call(this).catch(console.error);
+      }).call(this).then(() => {
+        this.logger.debug("Cloned successfully");
+      }).catch(this.logger.error);
     }
   }
 
@@ -70,9 +79,13 @@ class GitClient {
     await this.lock.acquireAsync();
 
     return new Promise((resolve, reject) => {
+      this.logger.verbose("Calling Git Command: " + command);
       exec("git " + command, {cwd: cwd}, (error, stdout, stderr) => {
         // The command is done, release the lock.
         this.lock.release();
+
+        if (stdout.length !== 0) this.logger.debug(stdout);
+        if (stderr.length !== 0) this.logger.error(stderr);
 
         // Exit code 0 returns a null for the error object.
         if (error !== null) reject(error);
@@ -85,6 +98,7 @@ class GitClient {
    * Wrapper method for the "fetch" command.
    */
   async fetch(): Promise<void> {
+    this.logger.silly("Calling fetch");
     await this.runGitCommand("fetch", this.workingDir);
   }
 
@@ -92,6 +106,7 @@ class GitClient {
    * Wrapper method for the "pull" command.
    */
   async pull(): Promise<void> {
+    this.logger.silly("Calling pull");
     await this.runGitCommand("pull", this.workingDir);
   }
 
@@ -100,6 +115,7 @@ class GitClient {
    * @param branch
    */
   async checkout(branch: string): Promise<void> {
+    this.logger.silly("Calling checkout on " + branch);
     await this.fetch();
     await this.runGitCommand(`checkout ${branch}`, this.workingDir);
     await this.pull();
@@ -113,6 +129,7 @@ class GitClient {
    * @param description An optional further description of the commit
    */
   async commitAll(summary: string, description?: string): Promise<void> {
+    this.logger.silly("Committing everything");
     let commitMessage = `-m "${summary.trim()}"`;
     if (description?.trim().length !== 0) {
       commitMessage += ` -m "${description?.trim()}"`;
@@ -124,6 +141,7 @@ class GitClient {
    * Wrapper method for the "push" command.
    */
   async push(): Promise<void> {
+    this.logger.silly("Calling push");
     await this.runGitCommand("push", this.workingDir);
   }
 
@@ -131,6 +149,7 @@ class GitClient {
    * Wrapper method for the "stash" command.
    */
   async stash(): Promise<void> {
+    this.logger.silly("Calling stash");
     await this.runGitCommand("stash", this.workingDir);
   }
 
@@ -144,10 +163,12 @@ class GitClient {
    * @returns An array of the extended paths
    */
   extendRepoPaths(diffPaths: string[]): string[] {
+    this.logger.debug("Expanding paths: " + diffPaths.join(" "))
     let fullPaths = [];
     for (let diffPath of diffPaths) {
       fullPaths.push(this.workingDir + "/" + diffPath);
     }
+    this.logger.debug("Expanded paths to: " + fullPaths.join(" "));
     return fullPaths;
   }
 }
