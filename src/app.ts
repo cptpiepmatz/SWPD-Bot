@@ -148,17 +148,30 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
         console.log("formatted successfully");
 
         try {
-          // Commit everything and push it.
+          // Commit everything.
           await gitClient.commitAll("Auto-Reformat PR#" + oldPR.id,
-            "This action was performed automatically by a bot.")
+            "This action was performed automatically by a bot.");
+        }
+        catch (e) {
+          // If it cannot commit, probably there is nothing to commit.
+          await bbClient
+            .commentPullRequest("**👌 Nothing to format.**", oldPR.id);
+          lock.release();
+          return;
+        }
+
+        try {
+          // Push changes.
           await gitClient.push();
         }
         catch (e) {
-          // If nothing to commit, comment it.
+          // If it could not push, comment it.
+          // Also stash the possible changes.
           await bbClient
-            .commentPullRequest("**👌 Nothing to format.**", oldPR.id);
+            .commentPullRequest("**⚠️ Could not push changes.**", oldPR.id);
+          await gitClient.stash();
+          lock.release();
         }
-        lock.release();
       }
     }
   });
