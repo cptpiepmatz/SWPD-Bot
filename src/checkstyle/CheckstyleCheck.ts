@@ -65,20 +65,20 @@ class CheckstyleCheck {
     /*
      * The pattern used to match the input.
      *
-     * "^"                     Check from the beginning of the line.
-     * "\[(ERROR|WARN)]"       Check for the severity of the check.
-     * "((?:\w:)?[\w\\\-.]+):" Matches for the path the check outputs.
-     * > "(?:\w:)?"            This part is being used to match for drive
-     *                          letters in windows.
-     * > "[\w\\\-.]+)"         This part checks for the rest of path.
-     * > ":"                   This separates the path from the line numbers.
-     * "(?:(\d+):)?"           The first time it matches for the line number,
-     *                          the second time for the character number.
-     * "([\w\s.]+)"            Matches for the comment the module spilled out.
-     * "\[(\w+)]"              Matches for the module name in the end.
+     * "^"                       Check from the beginning of the line.
+     * "\[(ERROR|WARN)]"         Check for the severity of the check.
+     * "((?:\w:)?[\w\\\-\/.]+):" Matches for the path the check outputs.
+     * > "(?:\w:)?"              This part is being used to match for drive
+     *                            letters in windows.
+     * > "[\w\\\-\/.]+)"         This part checks for the rest of path.
+     * > ":"                     This separates the path from the line numbers.
+     * "(?:(\d+):)?"             The first time it matches for the line number,
+     *                            the second time for the character number.
+     * "([\w\s.]+)"              Matches for the comment the module spilled out.
+     * "\[(\w+)]"                Matches for the module name in the end.
      */
     let pattern =
-      /^\[(ERROR|WARN)] ((?:\w:)?[\w\\\-.]+):(?:(\d+):)?(?:(\d+):)? ([\w\s.]+) \[(\w+)]/;
+      /^\[(ERROR|WARN)] ((?:\w:)?[\w\\\-\/.]+):(?:(\d+):)?(?:(\d+):)? ([\w\s.]+) \[(\w+)]/;
     let match = line.match(pattern);
 
     new Logger("CheckstyleCheck#fromString").debug(JSON.stringify(match));
