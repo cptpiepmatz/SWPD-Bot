@@ -14,7 +14,6 @@ const formatterDir = "./idea-formatter";
 class IntelliJFormatter {
   // Lock to make sure two runners aren't working at the same time.
   private readonly lock: AwaitLock;
-  private readonly formatterConfig: string;
   private readonly logger: Logger;
 
   /**
@@ -23,13 +22,10 @@ class IntelliJFormatter {
    * @param ideaPath The path of the executable
    * @param configName The name of the config to run the format from
    */
-  constructor(private readonly ideaPath: string, configName: string) {
+  constructor(private readonly ideaPath: string) {
     this.lock = new AwaitLock();
 
-    this.formatterConfig = resolve(formatterDir + "/" + configName);
-
     this.logger = new Logger(this);
-    this.logger.debug("Found config: " + this.formatterConfig);
     this.logger.silly("Constructor done");
   }
 
@@ -54,7 +50,7 @@ class IntelliJFormatter {
       // Promisify the exec function.
 
       let command =
-        `${this.ideaPath} format -s ${this.formatterConfig} ${fileString}`;
+        `${this.ideaPath} format ${fileString}`;
       this.logger.debug("Calling Command: " + command);
       exec(
         command,

@@ -26,8 +26,7 @@ const bitBucketConfig = jsonfile.readFileSync("./bitbucketconfig.json") as {
 
 // The config for the formatter to use.
 const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
-  ideaPath: string,
-  formatterXML: string
+  ideaPath: string
 };
 
 // Anonymous async function to allow top-level await calls.
@@ -55,8 +54,7 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
   const styleChecker = new StyleChecker();
 
   const formatter = new IntelliJFormatter(
-    formatterConfig.ideaPath,
-    formatterConfig.formatterXML
+    formatterConfig.ideaPath
   );
 
   const logger = new Logger("APP");
