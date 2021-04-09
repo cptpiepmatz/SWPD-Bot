@@ -182,8 +182,8 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
             .commentPullRequest("**⚠️ Could not push changes.**", oldPR.id);
           logger.warn("Could not push formatted Code");
           await gitClient.stash();
-          lock.release();
         }
+        lock.release();
       }
     }
   });
