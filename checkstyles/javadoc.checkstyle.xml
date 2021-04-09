@@ -10,6 +10,9 @@
   <property name="severity" value="warning"/>
   <property name="fileExtensions" value="java"/>
   <module name="TreeWalker">
+    <module name="SuppressionXpathSingleFilter">
+      <property name="files" value=".*Test\.java"/> <!-- this ignores test files -->
+    </module>
     <module name="MissingJavadocMethod">
       <property name="ignoreMethodNamesRegex"
         value="^(set|get|is|has).+"/> <!-- this ignores simple getter methods -->
