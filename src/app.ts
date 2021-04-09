@@ -64,6 +64,7 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
     let diffResponse = await bbClient.fetchDiff(pullRequestId);
     let sources: Array<string> = [];
     for (let diff of diffResponse.diffs) {
+      if (diff.source === null) continue;
       sources.push(diff.source.toString);
     }
     return gitClient.extendRepoPaths(sources);
