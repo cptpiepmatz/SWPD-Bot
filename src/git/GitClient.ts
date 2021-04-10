@@ -159,6 +159,18 @@ class GitClient {
   }
 
   /**
+   * Wrapper method for a "diff" and an "apply" command.
+   *
+   * <p>This will remove all whitespace changes in the working tree.
+   */
+  async removeWhitespaceChanges(): Promise<void> {
+    this.logger.silly("Calling a diff and then a apply");
+    await this
+      .runGitCommand("diff -w | git apply --ignore-whitespace",
+        this.workingDir);
+  }
+
+  /**
    * Method to extend the repo paths known to git into the paths in the working
    * directory.
    * <p><b>This method does not check if the paths aren't already extended. It will
