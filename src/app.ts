@@ -157,10 +157,6 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
         logger.info("Formatted everything successfully");
 
         try {
-          // Remove whitespace changes.
-          await gitClient.removeWhitespaceChanges();
-          logger.info("Removed Whitespace Changes");
-
           // Commit everything.
           await gitClient.commitAll("Auto-Reformat PR#" + oldPR.id,
             "This action was performed automatically by a bot.");
