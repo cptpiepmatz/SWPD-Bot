@@ -105,6 +105,25 @@ To install the bot, simply run the npm install script inside the root directory.
 npm install
 ```
 
+### Log-Level (optional)
+On default the bot will output into the console with the log level: "INFO".
+To change this to another log-level just add an environmental variable with 
+`LOGLEVEL`. You may also create in the root of the bot a `.env` file with the 
+content: 
+```dotenv
+LOGLEVEL=verbose
+```
+You can also set one of these log levels which all increase in output:
+```
+error
+warn
+info
+http
+verbose
+debug
+silly
+```
+
 ### Ready to Roll
 Now the bot should be fully configured, and you can run it. Maybe consider 
 running it via some process manager like [pm2](https://pm2.keymetrics.io/).
