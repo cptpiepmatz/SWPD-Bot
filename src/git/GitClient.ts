@@ -63,6 +63,7 @@ class GitClient {
         await this.runGitCommand("clone " + remote, repoDir);
         await this.runGitCommand(`config --local user.name "${this.name}"`, this.workingDir);
         await this.runGitCommand(`config --local user.email "${this.email}"`, this.workingDir);
+        await this.runGitCommand("config --local core.autocrlf input", this.workingDir);
       }).call(this).then(() => {
         this.logger.debug("Cloned successfully");
       }).catch(this.logger.error);
