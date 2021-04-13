@@ -3,15 +3,16 @@
 ![GitHub package.json dependency version (prod)](https://img.shields.io/github/package-json/dependency-version/derPiepmatz/SWPD-Bot/typescript?style=for-the-badge)
 ![GitHub](https://img.shields.io/github/license/derPiepmatz/SWPD-Bot?style=for-the-badge)
 
-A bot to support the software project group D in 2020/21 at [CvO Uni Oldenburg](https://uol.de/).  
+A bot to support the software project of group D in 2020/21 at 
+[CvO Uni Oldenburg](https://uol.de/).  
 Completely written in Typescript to manage Java code. 🙃
 
 ## About
-Currently (Summer 2021) I work on a group project at the 
-[CvO Uni Oldenburg](https://uol.de/). We have to use Atlassian's Bitbucket and 
-we wanted some automation.
+I am currently, summer 2021, working on a group project at the 
+[CvO Uni Oldenburg](https://uol.de/). We have to use Atlassian's Bitbucket, and 
+we wanted to automate some things.
 Luckily Bitbucket has some [API](https://developer.atlassian.com/static/rest/bitbucket-server/latest/bitbucket-rest.html) 
-to work with. So I created this bot to automate some stuff.
+to work with, which brought this bot about.
 
 ## Features
 This bot has two main features for now:
@@ -20,24 +21,24 @@ This bot has two main features for now:
 - [Formatting Code](#Formatter) with [IntelliJ IDEA](https://www.jetbrains.com/idea/)
 
 ### Checkstyle
-This bot just takes diffs in a pull request and applies the Checkstyle on it.
-It just executes the .jar and parses the results. The parsed results will be 
-formatted in some good-looking markdown:
+This bot takes diffs in a pull request and applies the Checkstyle on it.
+It executes the .jar and parses the results which will be 
+formatted in a good-looking markdown:
 > ❌ **You did some error.** *(en.stuff.you.are.Stupid:69:3)*  
 > ⚠️ **Warned you.** *(en.stuff.you.are.Ignorant:420)*
 
 These markdown outputs will be commented under the pull request.
 
-If the bot found no conflict it will just post this under the pull request:
+If the bot found no conflict it will post this under the pull request:
 > ✔️ **No checkstyle conflicts found.**
 
 ### Formatter
 To format our code easily in one place, the bot runs the 
 [IntelliJ CLI](https://www.jetbrains.com/help/idea/command-line-formatter.html) 
 formatter over the modified files. This formatting will take place once the pull
-request has reached it's required approvals (they can be defined in the config).
+request has reached it's required approvals (can be defined in the config).
 
-Upon approval the formatter will run over the files and if changes we're made,
+Upon approval the formatter will run over the files and if changes were made,
 the bot will try to push them with a commit like this:
 > **Auto-Reformat PR#69** 
 > 
@@ -50,8 +51,8 @@ If the bot wanted to push but could not, it will comment this:
 > **⚠️ Could not push changes.**
 
 ## Behavior
-I don't really know if it would be possible to use a gateway or some websocket, 
-the bot just polls frequently (once a minute) the Bitbucket server. Usually this 
+I don't know if it would be possible to use a gateway or websocket, 
+the bot just polls the Bitbucket server frequently (once a minute). Usually this 
 should have no impact on the 
 [rate limits](https://support.atlassian.com/bitbucket-cloud/docs/api-request-limits/) 
 of it.
@@ -66,8 +67,8 @@ just easiest way to implement the features I wanted.
 - node@lts
 
 ### Token
-The bot requires some authentication for the Bitbucket access. You could use the
-password for the account, but I prefer to use a generated token. 
+The bot requires some form of authentication for the Bitbucket access. You could 
+use the password for the account, but I prefer to use a generated token. 
 [This](https://confluence.atlassian.com/bitbucketserver/personal-access-tokens-939515499.html)
 explains how you can get one. The token you get must be written into a `.token`
 file in the root of the bot. The file should only contain the token, nothing 
