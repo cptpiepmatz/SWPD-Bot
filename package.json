@@ -1,6 +1,9 @@
 {
   "name": "swpd-bot",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "description": "A bot to support the software project for group D in 2020/21 at CvO Uni Oldenburg.",
   "main": "src/app.ts",
   "scripts": {
