@@ -2,6 +2,7 @@ import AwaitLock from "await-lock";
 import { exec } from "child_process";
 import { resolve } from "path";
 import Logger from "../logger/Logger";
+import * as fs from "fs/promises";
 
 // The directory the formatter config has to be stored in.
 const formatterDir = "./idea-formatter";
@@ -31,6 +32,7 @@ class IntelliJFormatter {
 
   /**
    * Formats all the files passed files.
+   * If a file is missing, it will be skipped.
    *
    * @param files Path(s) of the file(s) to format
    */
@@ -41,8 +43,17 @@ class IntelliJFormatter {
     if (!Array.isArray(files)) files = [files];
     let fileString = "";
     for (let file of files) {
+      try {
+        // Check if a file exists, if not, skip it.
+        await fs.access(file);
+      }
+      catch (e) {
+        continue;
+      }
       fileString += `"${resolve(file)}" `;
     }
+    // If no file exists, the formatter doesn't have to do anything.
+    if (fileString.length == 0) return;
 
     // Wait until the the formatter is done with it's other format actions.
     await this.lock.acquireAsync();
