@@ -90,7 +90,7 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
 
     await lock.acquireAsync(); // Files should be frozen here.
 
-    await gitClient.checkout(pullRequest.fromRef.displayId);
+    await gitClient.forceCheckout(pullRequest.fromRef.displayId);
     await gitClient.pull();
 
     logger.info("Checking modified Files for Style Conflicts");
@@ -149,7 +149,7 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
         let extendedSources = await fetchDiffSources(oldPR.id);
         logger.debug("Found Diffs: " + extendedSources.join(" "));
         await lock.acquireAsync();
-        await gitClient.checkout(oldPR.fromRef.displayId);
+        await gitClient.forceCheckout(oldPR.fromRef.displayId);
         let javaSources =
           extendedSources.filter(source => source.endsWith(".java"));
         logger.debug("Filtered Diffs: " + javaSources.join(" "));

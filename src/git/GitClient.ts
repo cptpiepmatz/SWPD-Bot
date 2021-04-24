@@ -118,12 +118,25 @@ class GitClient {
 
   /**
    * Wrapper method for the "checkout" command.
-   * @param branch
+   * @param branch Branch to switch to
    */
   async checkout(branch: string): Promise<void> {
     this.logger.silly("Calling checkout on " + branch);
     await this.fetch();
     await this.runGitCommand(`checkout ${branch}`, this.workingDir);
+    await this.pull();
+  }
+
+  /**
+   * Wrapper method for the checkout command but with force.
+   * Throws away all local changes.
+   *
+   * @param branch Branch to switch to
+   */
+  async forceCheckout(branch: string): Promise<void> {
+    this.logger.silly("Forcing checkout on " + branch);
+    await this.fetch();
+    await this.runGitCommand(`checkout -f ${branch}`, this.workingDir);
     await this.pull();
   }
 
