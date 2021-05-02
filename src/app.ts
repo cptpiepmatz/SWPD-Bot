@@ -178,6 +178,7 @@ const mavenConfig = jsonfile.readFileSync("./mavenconfig.json") as {
           lock.release();
           return;
         }
+        logger.info("Executed Maven goals successfully!");
 
         try {
           // Commit everything.
