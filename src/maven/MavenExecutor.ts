@@ -28,7 +28,7 @@ class MavenExecutor {
   }
 
   /**
-   * Executes a maven command.
+   * Executes a maven command. All commands will be executed as cleans.
    *
    * @param parameters The parameters of the maven command
    */
@@ -37,7 +37,7 @@ class MavenExecutor {
     this.logger.verbose("Executing maven command: " + parameters);
     return new Promise((resolve, reject) => {
       exec(
-        this.mvnCmd + " " + parameters,
+        this.mvnCmd + " clean " + parameters,
         {cwd: "./repo/" + this.repoName},
         (error, stdout, stderr) => {
           // The executor is done with this command, release the lock
