@@ -19,7 +19,7 @@ This bot has two main features for now:
 
 - [Checking Code](#Checkstyle) with [Checkstyle](https://checkstyle.sourceforge.io/)
 - [Formatting Code](#Formatter) with [IntelliJ IDEA](https://www.jetbrains.com/idea/)
-- [Executing Maven Goals](#Maven Goals) with [Maven](http://maven.apache.org)
+- [Executing Maven Goals](#Maven-Goals) with [Maven](http://maven.apache.org)
 
 ### Checkstyle
 This bot takes diffs in a pull request and applies the Checkstyle on it.
@@ -77,6 +77,7 @@ just easiest way to implement the features I wanted.
 - git
 - npm@latest
 - node@lts
+- mvn
 
 ### Token
 The bot requires some form of authentication for the Bitbucket access. You could 
