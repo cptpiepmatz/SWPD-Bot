@@ -1,0 +1,10 @@
+{
+  "cmd": "mvn",
+  "goals": [
+    {
+      "goal": "impsort:sort",
+      "skipTests": true,
+      "required": false
+    }
+  ]
+}
