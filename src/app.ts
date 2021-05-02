@@ -7,6 +7,8 @@ import StyleChecker from "./checkstyle/StyleChecker";
 import IntelliJFormatter from "./formatter/IntelliJFormatter";
 import AwaitLock from "await-lock";
 import Logger from "./logger/Logger";
+import GoalConfig from "./maven/types/GoalConfig";
+import MavenExecutor from "./maven/MavenExecutor";
 
 // The token used to log into BitBucket.
 const token = (fs.readFileSync("./.token", "utf-8") as unknown as string)
@@ -28,6 +30,12 @@ const bitBucketConfig = jsonfile.readFileSync("./bitbucketconfig.json") as {
 const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
   ideaPath: string
 };
+
+// The config for the maven executor, containing all goals
+const mavenConfig = jsonfile.readFileSync("./mavenconfig.json") as {
+  cmd: string,
+  goals: GoalConfig[]
+}
 
 // Anonymous async function to allow top-level await calls.
 (async function() {
@@ -56,6 +64,8 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
   const formatter = new IntelliJFormatter(
     formatterConfig.ideaPath
   );
+
+  const mavenExecutor = new MavenExecutor(mavenConfig.cmd, bitBucketConfig.repo);
 
   const logger = new Logger("APP");
 
@@ -155,6 +165,19 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
         logger.debug("Filtered Diffs: " + javaSources.join(" "));
         await formatter.format(javaSources);
         logger.info("Formatted everything successfully");
+
+        logger.info("Executing configured Maven Goals now!");
+        try {
+          await mavenExecutor.executeGoals(mavenConfig.goals);
+        }
+        catch (e) {
+          await bbClient.commentPullRequest(
+            "**❗ A required maven goal failed. " +
+            "Will stop now.**", oldPR.id)
+          logger.error("A required maven goal failed.");
+          lock.release();
+          return;
+        }
 
         try {
           // Commit everything.
