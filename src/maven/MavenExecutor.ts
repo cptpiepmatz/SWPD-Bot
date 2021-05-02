@@ -58,8 +58,12 @@ class MavenExecutor {
    * @param goal A maven goal
    */
   async executeGoal(goal: GoalConfig) {
+    this.logger.verbose("Executing maven goal: " + goal.goal);
     let parameters = goal.goal;
-    if (goal.skipTests) parameters += " -DskipTests";
+    if (goal.skipTests) {
+      parameters += " -DskipTests";
+      this.logger.debug(`Goal ${goal.goal} will ignore tests`);
+    }
     await this.execMavenCommand(parameters);
   }
 
@@ -70,6 +74,7 @@ class MavenExecutor {
    * @param goals An array of maven goals
    */
   async executeGoals(goals: GoalConfig[]) {
+    this.logger.debug("Executing multiple maven goals now");
     for (let goal of goals) {
       try {
         await this.executeGoal(goal);
