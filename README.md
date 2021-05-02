@@ -19,6 +19,7 @@ This bot has two main features for now:
 
 - [Checking Code](#Checkstyle) with [Checkstyle](https://checkstyle.sourceforge.io/)
 - [Formatting Code](#Formatter) with [IntelliJ IDEA](https://www.jetbrains.com/idea/)
+- [Executing Maven Goals](#Maven Goals) with [Maven](http://maven.apache.org)
 
 ### Checkstyle
 This bot takes diffs in a pull request and applies the Checkstyle on it.
@@ -49,6 +50,17 @@ If nothing has to be committed the bot will comment this under the pull request:
 
 If the bot wanted to push but could not, it will comment this:
 > **⚠️ Could not push changes.**
+
+### Maven Goals
+The bot will execute a list of given maven goals. Like the formatter this will
+only happen after the pull request reached it's required approvals. All goals
+will be executed under the `clean` option.
+
+If a maven goal that is set as required fails it will comment under the pull
+request:
+> **❗ A required maven goal failed. Will stop now.**
+
+After a fail the execution for this PR will be stopped. The bot still runs then.
 
 ## Behavior
 I don't know if it would be possible to use a gateway or websocket, 
@@ -99,6 +111,27 @@ configured, so that the bot is able to use it properly.
 }
 ```
 Just enter the full path of your `idea64.exe` or your `idea.sh`.
+
+### Maven Config
+The bot needs to know how it can execute maven, this will be defined in the 
+config. Also, an array of goals can need to be defined here. The order of goals
+will also be the order of execution.
+```json
+{
+  "cmd": "mvn",
+  "goals": [
+    {
+      "goal": "impsort:sort",
+      "skipTests": true,
+      "required": false
+    }
+  ]
+}
+```
+
+Setting a goal as required will cause the bot to stop working on the PR after 
+the goal failed. Setting the `skipTests` to `true` will add the maven option
+`-DskipTests` to the parameters.
 
 ### Installing
 To install the bot, simply run the npm install script inside the root directory.
