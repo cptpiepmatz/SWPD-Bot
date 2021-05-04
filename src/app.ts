@@ -6,11 +6,20 @@ import GitClient from "./git/GitClient";
 import StyleChecker from "./checkstyle/StyleChecker";
 import IntelliJFormatter from "./formatter/IntelliJFormatter";
 import AwaitLock from "await-lock";
-import Logger from "./logger/Logger";
+import Logger, { setWebhookPings, setWebhookUrl } from "./logger/Logger";
 
 // The token used to log into BitBucket.
 const token = (fs.readFileSync("./.token", "utf-8") as unknown as string)
   .replace(/[\r\n\s]+/g, "");
+
+// The webhook url used to log errors in Discord.
+const webhookUrl = (fs.readFileSync("./.webhook", "utf-8") as unknown as string)
+  .replace(/[\r\n\s]+/g, "");
+
+// The config used to configure the webhook.
+const webhookConfig = jsonfile.readFileSync("./webhookconfig.json") as {
+  pingsOnError: string[]
+}
 
 // The config used to configure the repo to interact with.
 const bitBucketConfig = jsonfile.readFileSync("./bitbucketconfig.json") as {
@@ -34,6 +43,9 @@ const formatterConfig = jsonfile.readFileSync("./formatterconfig.json") as {
   // A lock to make sure only one operation modifying files is used at the same
   // time.
   const lock = new AwaitLock();
+
+  setWebhookUrl(webhookUrl);
+  setWebhookPings(webhookConfig.pingsOnError);
 
   const bbClient = new BitBucketClient(
     bitBucketConfig.host,
