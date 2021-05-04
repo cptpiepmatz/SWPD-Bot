@@ -90,11 +90,15 @@ class GitClient {
         // The command is done, release the lock.
         this.lock.release();
 
-        if (stdout.length !== 0) this.logger.debug(stdout);
-        if (stderr.length !== 0) this.logger.error(stderr);
+        if (error !== null) {
+          this.logger.error(stdout);
+          this.logger.error(stderr);
+          reject(error);
+        }
 
-        // Exit code 0 returns a null for the error object.
-        if (error !== null) reject(error);
+        // Git uses stderr for logging it's process
+        this.logger.debug(stdout);
+        this.logger.debug(stderr);
         resolve(stdout);
       });
     });
