@@ -1,6 +1,8 @@
 import * as winston from "winston";
 import dayjs from "dayjs";
 import dotenv from "dotenv";
+import DiscordWebhookTransport from "./DiscordWebhookTransport";
+import { MessageBuilder } from "discord-webhook-node";
 
 // Some convenience constants.
 const {createLogger, format, transports} = winston;
@@ -9,6 +11,11 @@ const colorize = winston.format.colorize().colorize;
 
 // The directory to output the log files.
 const logDir = "./log";
+
+// Url for the Discord webhook. Will be updated via setter in the logger.
+let webhookUrl: string | null = null;
+
+let webhookPings: string[] = [];
 
 /**
  * Integration of a winston logger.
@@ -101,7 +108,15 @@ class Logger {
           filename: "error.log",
           dirname: logDir,
           format: fileFormat
-        })
+        }),
+        new DiscordWebhookTransport(
+          webhookUrl,
+          {
+            level: "info",
+            format: combine(label({label: labelName}), format.colorize())
+          },
+          webhookPings
+          )
       ]
     });
   }
@@ -183,6 +198,26 @@ class Logger {
     return this;
   }
 
+}
+
+/**
+ * Sets the webhook url for the discord webhook transport. Needs to be set
+ * before creating the logger using it.
+ *
+ * @param url Url for the webhook
+ */
+export function setWebhookUrl(url: string) {
+  webhookUrl = url;
+}
+
+/**
+ * Set the webhook pings for the discord webhook transport. Needs to be set
+ * before creating the logger using it.
+ *
+ * @param pings Array of ids to ping for.
+ */
+export function setWebhookPings(pings: string[]) {
+  webhookPings = pings;
 }
 
 export default Logger;
