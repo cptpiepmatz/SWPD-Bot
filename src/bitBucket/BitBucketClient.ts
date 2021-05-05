@@ -202,7 +202,7 @@ class BitBucketClient extends EventEmitter {
     for (let [key, value] of this.pullRequests as Map<Number, PullRequestData>) {
       serializableObject[+key] = value;
     }
-    this.logger.debug("Writing to Cache: " + JSON.stringify(serializableObject));
+    this.logger.silly("Writing to Cache: " + JSON.stringify(serializableObject));
     let result = await writeFile(
       "./.bb-pr-data",
       JSON.stringify(serializableObject),

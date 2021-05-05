@@ -87,6 +87,20 @@ explains how you can get one. The token you get must be written into a `.token`
 file in the root of the bot. The file should only contain the token, nothing 
 more.
 
+### Discord Webhook
+The bot is able to log also into a discord webhook. For that it needs the 
+webhook url, and some config on who to ping when an error occurs. For the url a 
+file called `.webhook` should be made in the root, just like the token.
+The config is set up like this in the `webhookconfig.json`.
+```json5
+{
+  "pingsOnError": [
+    "137280289708834816", // a user id
+    "&605766552427560978" // a role id
+  ]
+}
+```
+
 ### Bitbucket Config
 In the repo you find a file called `bitbucketconfig.json`. This file contains
 the configuration for your Bitbucket repository. Change it how you need it.
