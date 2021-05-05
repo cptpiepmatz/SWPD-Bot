@@ -9,8 +9,8 @@ import RepositoryData from "./types/data/RepositoryData";
 import { writeFile } from "fs/promises";
 import { readFileSync } from "fs";
 import DiffResponse from "./types/response/get/DiffResponse";
-import deepEqual from "deep-equal";
 import Logger from "../logger/Logger";
+import { isIdentical } from "js-identical";
 
 /**
  * A client to interact with the BitBucket API.
@@ -287,7 +287,10 @@ class BitBucketClient extends EventEmitter {
       for (let remotePR of pullRequests) {
         // Iterate over the remote pull requests to check for updates
         let localPR = client.pullRequests.get(remotePR.id);
-        if (!deepEqual(remotePR, localPR)) {
+        console.log(remotePR.reviewers);
+        console.log(localPR?.reviewers);
+        console.log(isIdentical(remotePR.reviewers, localPR?.reviewers))
+        if (!isIdentical(remotePR.reviewers, localPR?.reviewers)) {
           if (localPR === undefined) continue;
           client.logger.debug("Pull Request differ from locally stored: "
             + remotePR.title);

@@ -4,9 +4,6 @@ import { resolve } from "path";
 import Logger from "../logger/Logger";
 import * as fs from "fs/promises";
 
-// The directory the formatter config has to be stored in.
-const formatterDir = "./idea-formatter";
-
 /**
  * Runner class for the IntelliJ format utility.
  * <p>Since this runs IntelliJ, it has to be installed on the machine in order
@@ -21,7 +18,6 @@ class IntelliJFormatter {
    * Constructor.
    *
    * @param ideaPath The path of the executable
-   * @param configName The name of the config to run the format from
    */
   constructor(private readonly ideaPath: string) {
     this.lock = new AwaitLock();

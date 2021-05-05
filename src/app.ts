@@ -98,7 +98,7 @@ const mavenConfig = jsonfile.readFileSync("./mavenconfig.json") as {
   bbClient.startHeartbeat();
 
   bbClient.on("heartbeat", () => {
-    logger.info("Heartbeat for the BitBucket Client");
+    logger.verbose("Heartbeat for the BitBucket Client");
   });
 
   bbClient.on("prCreate", async (pullRequest: PullRequestData) => {

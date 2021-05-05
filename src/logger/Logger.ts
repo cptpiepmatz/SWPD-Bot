@@ -2,7 +2,6 @@ import * as winston from "winston";
 import dayjs from "dayjs";
 import dotenv from "dotenv";
 import DiscordWebhookTransport from "./DiscordWebhookTransport";
-import { MessageBuilder } from "discord-webhook-node";
 
 // Some convenience constants.
 const {createLogger, format, transports} = winston;
