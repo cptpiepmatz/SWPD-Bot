@@ -91,14 +91,19 @@ class GitClient {
         this.lock.release();
 
         if (error !== null) {
-          this.logger.error(stdout);
-          this.logger.error(stderr);
+          if (stdout.trim().length > 0) this.logger.error(stdout);
+          if (stderr.trim().length > 0) {
+            if (stderr.indexOf("nothing to commit, working tree clean") === -1) {
+              this.logger.error(stderr);
+            }
+            else this.logger.debug(stderr);
+          }
           reject(error);
         }
 
         // Git uses stderr for logging it's process
-        this.logger.debug(stdout);
-        this.logger.debug(stderr);
+        if (stdout.trim().length > 0) this.logger.debug(stdout);
+        if (stderr.trim().length > 0) this.logger.debug(stderr);
         resolve(stdout);
       });
     });

@@ -287,10 +287,7 @@ class BitBucketClient extends EventEmitter {
       for (let remotePR of pullRequests) {
         // Iterate over the remote pull requests to check for updates
         let localPR = client.pullRequests.get(remotePR.id);
-        console.log(remotePR.reviewers);
-        console.log(localPR?.reviewers);
-        console.log(isIdentical(remotePR.reviewers, localPR?.reviewers))
-        if (!isIdentical(remotePR.reviewers, localPR?.reviewers)) {
+        if (!isIdentical(remotePR, localPR)) {
           if (localPR === undefined) continue;
           client.logger.debug("Pull Request differ from locally stored: "
             + remotePR.title);

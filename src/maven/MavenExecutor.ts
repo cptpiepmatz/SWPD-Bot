@@ -43,10 +43,14 @@ class MavenExecutor {
           // The executor is done with this command, release the lock
           this.lock.release();
 
-          if (stdout.length !== 0) this.logger.debug(stdout);
-          if (stderr.length !== 0) this.logger.error(stderr);
+          if (error !== null) {
+            if (stdout.trim().length > 0) this.logger.error(stdout);
+            if (stderr.trim().length > 0) this.logger.error(stderr);
+            reject(error);
+          }
 
-          if (error !== null) reject(error);
+          if (stdout.trim().length > 0) this.logger.debug(stdout);
+          if (stderr.trim().length > 0) this.logger.debug(stderr);
           resolve();
         });
     });
