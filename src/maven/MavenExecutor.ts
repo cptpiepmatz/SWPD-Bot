@@ -44,8 +44,8 @@ class MavenExecutor {
           this.lock.release();
 
           if (error !== null) {
-            if (stdout.trim().length > 0) this.logger.error(stdout);
-            if (stderr.trim().length > 0) this.logger.error(stderr);
+            if (stdout.trim().length > 0) this.logger.warn(stdout);
+            if (stderr.trim().length > 0) this.logger.warn(stderr);
             reject(error);
           }
 
