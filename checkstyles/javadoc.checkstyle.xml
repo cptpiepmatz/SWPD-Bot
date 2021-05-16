@@ -3,8 +3,6 @@
   "-//Puppy Crawl//DTD Check Configuration 1.2//EN"
   "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
 
-<!-- This checkstyle configuration is used to control that javadoc comments are set correctly and aren't missing -->
-
 <module name="Checker">
   <property name="charset" value="UTF-8"/>
   <property name="severity" value="warning"/>
@@ -13,6 +11,8 @@
     <module name="SuppressionXpathSingleFilter">
       <property name="files" value=".*Test\.java"/> <!-- this ignores test files -->
     </module>
+
+    <!-- JavaDoc Checks -->
     <module name="MissingJavadocMethod">
       <property name="ignoreMethodNamesRegex"
         value="^(set|get|is|has).+"/> <!-- this ignores simple getter methods -->
@@ -27,5 +27,9 @@
     <module name="JavadocMethod"/>
     <module name="JavadocContentLocationCheck"/>
     <module name="JavadocStyle"/>
+    
+    <!-- Import Checks -->
+    <module name="AvoidStarImport"/>
+    <module name="RedundantImport"/>
   </module>
 </module>
